@@ -1,0 +1,5 @@
+E:\Projects\wiimote 1.8\WiimoteLib\bin\Debug\WiimoteLib.dll
+E:\Projects\wiimote 1.8\WiimoteLib\bin\Debug\WiimoteLib.pdb
+E:\Projects\wiimote 1.8\WiimoteLib\obj\Debug\WiimoteLib.dll
+E:\Projects\wiimote 1.8\WiimoteLib\obj\Debug\WiimoteLib.pdb
+E:\Projects\wiimote 1.8\WiimoteLib\obj\Debug\WiimoteLib.csprojResolveAssemblyReference.cache

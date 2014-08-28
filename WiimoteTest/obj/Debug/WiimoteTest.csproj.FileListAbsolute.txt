@@ -1,0 +1,13 @@
+E:\Projects\wiimote 1.8\WiimoteTest\bin\Debug\WiimoteTest.exe
+E:\Projects\wiimote 1.8\WiimoteTest\bin\Debug\WiimoteTest.pdb
+E:\Projects\wiimote 1.8\WiimoteTest\bin\Debug\WiimoteLib.dll
+E:\Projects\wiimote 1.8\WiimoteTest\bin\Debug\WiimoteLib.pdb
+E:\Projects\wiimote 1.8\WiimoteTest\bin\Debug\WiimoteLib.xml
+E:\Projects\wiimote 1.8\WiimoteTest\obj\Debug\WiimoteTest.csprojResolveAssemblyReference.cache
+E:\Projects\wiimote 1.8\WiimoteTest\obj\Debug\WiimoteTest.SingleWiimoteForm.resources
+E:\Projects\wiimote 1.8\WiimoteTest\obj\Debug\WiimoteTest.MultipleWiimoteForm.resources
+E:\Projects\wiimote 1.8\WiimoteTest\obj\Debug\WiimoteTest.Properties.Resources.resources
+E:\Projects\wiimote 1.8\WiimoteTest\obj\Debug\WiimoteTest.WiimoteInfo.resources
+E:\Projects\wiimote 1.8\WiimoteTest\obj\Debug\WiimoteTest.csproj.GenerateResource.Cache
+E:\Projects\wiimote 1.8\WiimoteTest\obj\Debug\WiimoteTest.exe
+E:\Projects\wiimote 1.8\WiimoteTest\obj\Debug\WiimoteTest.pdb
