@@ -151,9 +151,9 @@
         dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTU0YjhhMWYzOGM5NDIyMWEFAQAAABdPcGVuV2lyZS5Q
         aW5Db25uZWN0aW9ucwEAAAAERGF0YQYCAAAACQMAAAAMBAAAAEttc2NvcmxpYiwgVmVyc2lvbj0yLjAu
         MC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODkRAwAAAAUA
-        AAAGBQAAABNAV2lpbW90ZUluZm8uc2NvcGUxBgYAAAATQFdpaW1vdGVJbmZvLnNjb3BlMQYHAAAAHldp
-        aW1vdGVJbmZvLmxvd1Bhc3MxLk91dHB1dFBpbgYIAAAAE0BXaWltb3RlSW5mby5zY29wZTEGCQAAACpX
-        aWltb3RlSW5mby5nZW5lcmljUmVhbFZhbHVlR2VuMS5PdXRwdXRQaW4L
+        AAAGBQAAABNAV2lpbW90ZUluZm8uc2NvcGUxBgYAAAAiV2lpbW90ZUluZm8uTW90aW9uUGx1c19YLk91
+        dHB1dFBpbgYHAAAAE0BXaWltb3RlSW5mby5zY29wZTEGCAAAAChXaWltb3RlSW5mby5Nb3Rpb25QbHVz
+        VmFsdWUyX1guT3V0cHV0UGluBgkAAAATQFdpaW1vdGVJbmZvLnNjb3BlMQs=
 </value>
   </data>
   <data name="scope1.InternalData" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -227,7 +227,7 @@
         YXJ5RGF0YQEAAAAFRW51bXMHCAIAAAAJAwAAAA8DAAAAAwAAAAgAAAAAAgAAAAIAAAAL
 </value>
   </data>
-  <metadata name="genericRealValueGen1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+  <metadata name="MotionPlus_X.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>258, 17</value>
   </metadata>
   <data name="sourcePin1.ConnectionData" mimetype="application/x-microsoft.net.object.binary.base64">
@@ -236,27 +236,27 @@
         dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTU0YjhhMWYzOGM5NDIyMWEFAQAAABdPcGVuV2lyZS5Q
         aW5Db25uZWN0aW9ucwEAAAAERGF0YQYCAAAACQMAAAAMBAAAAEttc2NvcmxpYiwgVmVyc2lvbj0yLjAu
         MC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODkRAwAAAAIA
-        AAAGBQAAACFAV2lpbW90ZUluZm8uZ2VuZXJpY1JlYWxWYWx1ZUdlbjEGBgAAAB1XaWltb3RlSW5mby5s
-        b3dQYXNzMS5JbnB1dFBpbgs=
-</value>
-  </data>
-  <metadata name="lowPass1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>421, 17</value>
-  </metadata>
-  <data name="sinkPin2.ConnectionData" mimetype="application/x-microsoft.net.object.binary.base64">
-    <value>
-        AAEAAAD/////AQAAAAAAAAAMAgAAAFFNaXRvdi5CYXNpY0xhYiwgVmVyc2lvbj02LjAuMC4wLCBDdWx0
-        dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTU0YjhhMWYzOGM5NDIyMWEFAQAAABdPcGVuV2lyZS5Q
-        aW5Db25uZWN0aW9ucwEAAAAERGF0YQYCAAAACQMAAAAMBAAAAEttc2NvcmxpYiwgVmVyc2lvbj0yLjAu
-        MC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODkRAwAAAAIA
-        AAAGBQAAABVAV2lpbW90ZUluZm8ubG93UGFzczEGBgAAACpXaWltb3RlSW5mby5nZW5lcmljUmVhbFZh
-        bHVlR2VuMS5PdXRwdXRQaW4L
+        AAAGBQAAABlAV2lpbW90ZUluZm8uTW90aW9uUGx1c19YBgYAAAAeV2lpbW90ZUluZm8uc2NvcGUxLklu
+        cHV0UGlucy4wCw==
 </value>
   </data>
   <metadata name="genericFilter1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>518, 17</value>
   </metadata>
+  <metadata name="MotionPlusValue2_X.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>637, 17</value>
+  </metadata>
+  <data name="sourcePin3.ConnectionData" mimetype="application/x-microsoft.net.object.binary.base64">
+    <value>
+        AAEAAAD/////AQAAAAAAAAAMAgAAAFFNaXRvdi5CYXNpY0xhYiwgVmVyc2lvbj02LjAuMC4wLCBDdWx0
+        dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTU0YjhhMWYzOGM5NDIyMWEFAQAAABdPcGVuV2lyZS5Q
+        aW5Db25uZWN0aW9ucwEAAAAERGF0YQYCAAAACQMAAAAMBAAAAEttc2NvcmxpYiwgVmVyc2lvbj0yLjAu
+        MC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODkRAwAAAAIA
+        AAAGBQAAAB9AV2lpbW90ZUluZm8uTW90aW9uUGx1c1ZhbHVlMl9YBgYAAAAeV2lpbW90ZUluZm8uc2Nv
+        cGUxLklucHV0UGlucy4xCw==
+</value>
+  </data>
   <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>74</value>
+    <value>88</value>
   </metadata>
 </root>

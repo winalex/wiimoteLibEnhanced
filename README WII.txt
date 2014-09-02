@@ -21,3 +21,15 @@ rate = (N-512)/1024 * (double) 28.783;
 Analog Devices ADXL330 3 Axis Accelerometer
    //could go +/-3g
    //(N-512)/1024 * 3.0V * (9.8 m/s^2)/(0.300 V/g)
+    at 3g there are 512units and 0.9V/g
+	
+	
+	//const double fastModeFactor = 2000.0 / 440.0; //According to wiibrew
+            const double fastModeFactor = 20.0 / 4.0; //According to wiic
+            var gyro = calibration.NormalizeMotionplus(DateTime.Now, motionplus.yaw_down_speed,
+                                                                     motionplus.pitch_left_speed,
+                                                                     motionplus.roll_left_speed);
+
+            return new CalibratedValue<Gyro>(gyro.DidCalibrate, new Gyro((motionplus.slow_modes & 0x1) == 0x1 ? gyro.Value.x : gyro.Value.x * fastModeFactor,
+                                                                         (motionplus.slow_modes & 0x4) == 0x4 ? gyro.Value.y : gyro.Value.y * fastModeFactor,
+                                                                         (motionplus.slow_modes & 0x2) == 0x2 ? gyro.Value.z : gyro.Value.z * fastModeFactor));

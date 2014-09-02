@@ -75,8 +75,8 @@ namespace WiimoteTest
 			clbButtons.SetItemChecked(9, ws.ButtonState.Left);
 			clbButtons.SetItemChecked(10, ws.ButtonState.Right);
 
-            lblAccel.Text = ws.AccelState.RawValues6b.ToString();// ws.AccelState.Values.ToString();
-            lblAccOrientation.Text = ws.AccelState.RawValues8b.ToString();// ws.AccelState.Angles.ToString();
+            lblAccel.Text = ws.AccelState.Values.ToString();// ws.AccelState.RawValues6b.ToString();// ws.AccelState.Values.ToString();
+            lblAccOrientation.Text = ws.AccelState.Angles.ToString();// ws.AccelState.RawValues8b.ToString();// ws.AccelState.Angles.ToString();
            // lblOrientation.Text=ws.
 
 			chkLED1.Checked = ws.LEDState.LED1;
@@ -86,17 +86,18 @@ namespace WiimoteTest
 
                 
 
-			switch(ws.ExtensionType)
-			{
-				case ExtensionType.Nunchuk:
+			if  ((ws.Extension & (byte)ExtensionType.Nunchuck) !=0){
+			
                     //ws.NunchukState.AccelState.RawValues.ToString();
                     lblChuk.Text = ws.NunchukState.AccelState.Values.ToString();
                     lblChukJoy.Text =ws.NunchukState.Joystick.ToString();//ws.NunchukState.RawJoystick.ToString();////w// 
 					chkC.Checked = ws.NunchukState.C;
 					chkZ.Checked = ws.NunchukState.Z;
-					break;
-
-				case ExtensionType.ClassicController:
+					
+            }
+            
+            if  ((ws.Extension & (byte)ExtensionType.ClassicController) !=0){
+				
 					clbCCButtons.SetItemChecked(0, ws.ClassicControllerState.ButtonState.A);
 					clbCCButtons.SetItemChecked(1, ws.ClassicControllerState.ButtonState.B);
 					clbCCButtons.SetItemChecked(2, ws.ClassicControllerState.ButtonState.X);
@@ -118,9 +119,10 @@ namespace WiimoteTest
 
 					lblTriggerL.Text = ws.ClassicControllerState.TriggerL.ToString();
 					lblTriggerR.Text = ws.ClassicControllerState.TriggerR.ToString();
-					break;
+            }
+            
+            if  ((ws.Extension & (byte)ExtensionType.Guitar) !=0){
 
-				case ExtensionType.Guitar:
 				    clbGuitarButtons.SetItemChecked(0, ws.GuitarState.FretButtonState.Green);
 				    clbGuitarButtons.SetItemChecked(1, ws.GuitarState.FretButtonState.Red);
 				    clbGuitarButtons.SetItemChecked(2, ws.GuitarState.FretButtonState.Yellow);
@@ -140,9 +142,9 @@ namespace WiimoteTest
 					lblGuitarJoy.Text = ws.GuitarState.Joystick.ToString();
 					lblGuitarWhammy.Text = ws.GuitarState.WhammyBar.ToString();
 					lblGuitarType.Text = ws.GuitarState.GuitarType.ToString();
-				    break;
-
-				case ExtensionType.Drums:
+				   
+            }
+				 if  ((ws.Extension & (byte)ExtensionType.Drums) !=0){
 					clbDrums.SetItemChecked(0, ws.DrumsState.Red);
 					clbDrums.SetItemChecked(1, ws.DrumsState.Blue);
 					clbDrums.SetItemChecked(2, ws.DrumsState.Green);
@@ -161,9 +163,9 @@ namespace WiimoteTest
 					lbDrumVelocity.Items.Add(ws.DrumsState.PedalVelocity);
 
 					lblDrumJoy.Text = ws.DrumsState.Joystick.ToString();
-					break;
+                 }
 
-				case ExtensionType.BalanceBoard:
+				 if  ((ws.Extension & (byte)ExtensionType.BalancedBoard) !=0){
 					if(chkLbs.Checked)
 					{
 						lblBBTL.Text = ws.BalanceBoardState.SensorValuesLb.TopLeft.ToString();
@@ -181,16 +183,17 @@ namespace WiimoteTest
 						lblBBTotal.Text = ws.BalanceBoardState.WeightKg.ToString();
 					}
 					lblCOG.Text = ws.BalanceBoardState.CenterOfGravity.ToString();
-					break;
+                 }
 
-				case ExtensionType.TaikoDrum:
+				 if  ((ws.Extension & (byte)ExtensionType.TaikoDrums) !=0){
 					clbTaiko.SetItemChecked(0, ws.TaikoDrumState.OuterLeft);
 					clbTaiko.SetItemChecked(1, ws.TaikoDrumState.InnerLeft);
 					clbTaiko.SetItemChecked(2, ws.TaikoDrumState.InnerRight);
 					clbTaiko.SetItemChecked(3, ws.TaikoDrumState.OuterRight);
-					break;
+                 }
 
-                case ExtensionType.MotionPlus:
+                 if ((ws.Extension & (byte)ExtensionType.MotionPlus) != 0)
+                 {
                 //    lblOrientation.Text = "Roll: " + (ws.Position.Roll * Wiimote.RAD_TO_DEG).ToString("F3") + Environment.NewLine +
                 //             "Pitch: " + (ws.Position.Pitch * Wiimote.RAD_TO_DEG).ToString("F3") + Environment.NewLine +
                 //             "Yaw: " + (ws.Position.Yaw * Wiimote.RAD_TO_DEG).ToString("F3");
@@ -202,12 +205,20 @@ namespace WiimoteTest
                 //      "FGz: " + ws.MotionPlusState.FilteredValues.Z.ToString("F3");
 
 
-					lblMotionPlusRaw.Text = ws.MotionPlusState.RawValues.ToString();
-                    lblMotionPlus.Text = ws.MotionPlusState.Values.ToString();
+					//lblMotionPlusRaw.Text = ws.MotionPlusState.RawValues.ToString();
+                   // lblMotionPlusRaw.Text=ws.MotionPlusState.Values.ToString();
+                   // lblMotionPlus.Text = ws.MotionPlusState.Values2.ToString();
+                   
 					clbSpeed.SetItemChecked(0, ws.MotionPlusState.YawFast);
 					clbSpeed.SetItemChecked(1, ws.MotionPlusState.PitchFast);
 					clbSpeed.SetItemChecked(2, ws.MotionPlusState.RollFast);
-					break;
+
+                    mWiimote.fusionFilter.HandleIMUData(ws.MotionPlusState.Values.Z, ws.MotionPlusState.Values.X, ws.MotionPlusState.Values.Y, ws.AccelState.Values2.X, ws.AccelState.Values2.Y, ws.AccelState.Values2.Z);
+
+
+                    lblMotionPlus.Text= mWiimote.fusionFilter.FusedValues.ToString();
+
+					
 			}
 
 			g.Clear(Color.Black);
@@ -280,12 +291,22 @@ namespace WiimoteTest
 
         private void genericRealValueGen1_Generate(object Sender, Mitov.SignalLab.RealValueGenEventArgs Args)
         {
-            Args.OutValue=mWiimote.WiimoteState.AccelState.Angles.Pitch;
+            Args.OutValue = mWiimote.WiimoteState.MotionPlusState.Values.X;                 //mWiimote.WiimoteState.AccelState.Angles.Pitch;
         }
 
         private void genericFilter1_ProcessData(object Sender, Mitov.SignalLab.ProcessBlockNotifyArgs Args)
         {
             uint size = Args.InBuffer.Size;
+        }
+
+        private void chkFactoryCalibration_CheckedChanged(object sender, EventArgs e)
+        {
+            mWiimote.USE_FACTORY_CALIBRATION = chkFactoryCalibration.Checked;
+        }
+
+        private void MotionPlusValue2_X_Generate(object Sender, Mitov.SignalLab.RealValueGenEventArgs Args)
+        {
+            Args.OutValue = mWiimote.WiimoteState.MotionPlusState.Values2.X;            
         }
 	}
 }

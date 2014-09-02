@@ -920,6 +920,12 @@
             <remarks>Values range between 0 - ?</remarks>
             </summary>
         </member>
+        <member name="F:WiimoteLib.MotionPlusState.Values2">
+            <summary>
+            Normalized speed data
+            <remarks>Values range between 0 - ?</remarks>
+            </summary>
+        </member>
         <member name="F:WiimoteLib.MotionPlusState.YawFast">
             <summary>
             Yaw/Pitch/Roll rotating "quickly" (no definition for "quickly" yet...)
@@ -935,22 +941,9 @@
             Yaw/Pitch/Roll rotating "quickly" (no definition for "quickly" yet...)
             </summary>
         </member>
-        <member name="F:WiimoteLib.MotionPlusState.XFast">
+        <member name="F:WiimoteLib.MotionPlusState.Angles">
             <summary>
-            Yaw/Pitch/Roll rotating "quickly" (no definition for "quickly" yet...)
-            Change to X,Y,Z to make more sense
-            </summary>
-        </member>
-        <member name="F:WiimoteLib.MotionPlusState.YFast">
-            <summary>
-            Yaw/Pitch/Roll rotating "quickly" (no definition for "quickly" yet...)
-            Change to X,Y,Z to make more sense
-            </summary>
-        </member>
-        <member name="F:WiimoteLib.MotionPlusState.ZFast">
-            <summary>
-            Yaw/Pitch/Roll rotating "quickly" (no definition for "quickly" yet...)
-            Change to X,Y,Z to make more sense
+             Pitch and Roll and Yaw
             </summary>
         </member>
         <member name="T:WiimoteLib.BalanceBoardCalibrationInfo">
@@ -1084,13 +1077,25 @@
             Current state of the accelerometers
             </summary>
         </member>
-        <member name="F:WiimoteLib.AccelState.RawValues">
+        <member name="F:WiimoteLib.AccelState.RawValues6b">
             <summary>
             Raw accelerometer data.
             <remarks>Values range between 0 - 255</remarks>
             </summary>
         </member>
+        <member name="F:WiimoteLib.AccelState.RawValues8b">
+            <summary>
+            Raw accelerometer data.
+            <remarks>Values range between 0 - 1024</remarks>
+            </summary>
+        </member>
         <member name="F:WiimoteLib.AccelState.Values">
+            <summary>
+            Normalized accelerometer data.
+            <remarks>Values range between 0 - 3g, but values > 3g and &lt; -3g are inaccurate.(g=9.8m/s^2)</remarks>
+            </summary>
+        </member>
+        <member name="F:WiimoteLib.AccelState.Values2">
             <summary>
             Normalized accelerometer data.
             <remarks>Values range between 0 - ?, but values > 3 and &lt; -3 are inaccurate.</remarks>
@@ -1100,6 +1105,11 @@
             <summary>
             Orientation Data
             <remarks>Values range between 0 - ?</remarks>
+            </summary>
+        </member>
+        <member name="F:WiimoteLib.AccelState.Angles">
+            <summary>
+             Pitch and Roll angles (Yaw can't be measured as no change in gravity)
             </summary>
         </member>
         <member name="T:WiimoteLib.AccelCalibrationInfo">
@@ -1322,12 +1332,12 @@
             IR sensor, extension controller and accelerometer data
             </summary>
         </member>
-        <member name="F:WiimoteLib.InputReport.Special1">
+        <member name="F:WiimoteLib.InputReport.InterleaveButtonsAccellIR1">
             <summary>
             //0x3e / 0x3f: Interleaved Core Buttons and Accelerometer with 36 IR bytes
             </summary>
         </member>
-        <member name="F:WiimoteLib.InputReport.Special2">
+        <member name="F:WiimoteLib.InputReport.InterleaveButtonsAccellIR2">
             <summary>
             //0x3e / 0x3f: Interleaved Core Buttons and Accelerometer with 36 IR bytes
             </summary>
@@ -1397,6 +1407,130 @@
             Attempt to read from write only memory
             </summary>
         </member>
+        <member name="T:WiimoteLib.MahonyAHRS">
+            <summary>
+            MahonyAHRS class. Madgwick's implementation of Mayhony's AHRS algorithm.
+            </summary>
+            <remarks>
+            See: http://www.x-io.co.uk/node/8#open_source_ahrs_and_imu_algorithms
+            </remarks>
+        </member>
+        <member name="M:WiimoteLib.MahonyAHRS.#ctor(System.Single)">
+            <summary>
+            Initializes a new instance of the <see cref="!:MadgwickAHRS"/> class.
+            </summary>
+            <param name="samplePeriod">
+            Sample period.
+            </param>
+        </member>
+        <member name="M:WiimoteLib.MahonyAHRS.#ctor(System.Single,System.Single)">
+            <summary>
+            Initializes a new instance of the <see cref="!:MadgwickAHRS"/> class.
+            </summary>
+            <param name="samplePeriod">
+            Sample period.
+            </param>
+            <param name="kp">
+            Algorithm proportional gain.
+            </param> 
+        </member>
+        <member name="M:WiimoteLib.MahonyAHRS.#ctor(System.Single,System.Single,System.Single)">
+            <summary>
+            Initializes a new instance of the <see cref="!:MadgwickAHRS"/> class.
+            </summary>
+            <param name="samplePeriod">
+            Sample period.
+            </param>
+            <param name="kp">
+            Algorithm proportional gain.
+            </param>
+            <param name="ki">
+            Algorithm integral gain.
+            </param>
+        </member>
+        <member name="M:WiimoteLib.MahonyAHRS.Update(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            Algorithm AHRS update method. Requires only gyroscope and accelerometer data.
+            </summary>
+            <param name="gx">
+            Gyroscope x axis measurement in radians/s.
+            </param>
+            <param name="gy">
+            Gyroscope y axis measurement in radians/s.
+            </param>
+            <param name="gz">
+            Gyroscope z axis measurement in radians/s.
+            </param>
+            <param name="ax">
+            Accelerometer x axis measurement in any calibrated units.
+            </param>
+            <param name="ay">
+            Accelerometer y axis measurement in any calibrated units.
+            </param>
+            <param name="az">
+            Accelerometer z axis measurement in any calibrated units.
+            </param>
+            <param name="mx">
+            Magnetometer x axis measurement in any calibrated units.
+            </param>
+            <param name="my">
+            Magnetometer y axis measurement in any calibrated units.
+            </param>
+            <param name="mz">
+            Magnetometer z axis measurement in any calibrated units.
+            </param>
+            <remarks>
+            Optimised for minimal arithmetic.
+            </remarks> 
+        </member>
+        <member name="M:WiimoteLib.MahonyAHRS.Update(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            Algorithm IMU update method. Requires only gyroscope and accelerometer data.
+            </summary>
+            <param name="gx">
+            Gyroscope x axis measurement in radians/s.
+            </param>
+            <param name="gy">
+            Gyroscope y axis measurement in radians/s.
+            </param>
+            <param name="gz">
+            Gyroscope z axis measurement in radians/s.
+            </param>
+            <param name="ax">
+            Accelerometer x axis measurement in any calibrated units.
+            </param>
+            <param name="ay">
+            Accelerometer y axis measurement in any calibrated units.
+            </param>
+            <param name="az">
+            Accelerometer z axis measurement in any calibrated units.
+            </param>
+        </member>
+        <member name="P:WiimoteLib.MahonyAHRS.SamplePeriod">
+            <summary>
+            Gets or sets the sample period.
+            </summary>
+        </member>
+        <member name="P:WiimoteLib.MahonyAHRS.Kp">
+            <summary>
+            Gets or sets the algorithm proportional gain.
+            </summary>
+        </member>
+        <member name="P:WiimoteLib.MahonyAHRS.Ki">
+            <summary>
+            Gets or sets the algorithm integral gain.
+            </summary>
+        </member>
+        <member name="P:WiimoteLib.MahonyAHRS.Quaternion">
+            <summary>
+            Gets or sets the Quaternion output.
+            </summary>
+        </member>
+        <member name="P:WiimoteLib.MahonyAHRS.eInt">
+            <summary>
+            Gets or sets the integral error.
+            </summary>
+        </member>
         <member name="T:WiimoteLib.HIDImports">
             <summary>
             Win32 import information for use with the Wiimote library
@@ -1456,7 +1590,7 @@
             <param name="buff">Data buffer to parse</param>
             <returns>Returns a boolean noting whether an event needs to be posted</returns>
         </member>
-        <member name="M:WiimoteLib.Wiimote.InitializeExtension(System.Byte)">
+        <member name="M:WiimoteLib.Wiimote.InitializeExtension(System.Int64)">
             <summary>
             Handles setting up an extension when plugged in
             </summary>
@@ -1471,6 +1605,12 @@
         <member name="M:WiimoteLib.Wiimote.ParseButtons(System.Byte[])">
             <summary>
             Parses a standard button report into the ButtonState struct
+            </summary>
+            <param name="buff">Data buffer</param>
+        </member>
+        <member name="M:WiimoteLib.Wiimote.ParseAccel(WiimoteLib.InputReport,System.Byte[])">
+            <summary>
+            Parse accelerometer data in Interleave mode
             </summary>
             <param name="buff">Data buffer</param>
         </member>

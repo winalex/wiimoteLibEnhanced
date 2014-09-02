@@ -142,7 +142,15 @@ namespace WiimoteLib
         /// roll, pitch, yaw coordinates of this point
         /// </summary>
         [DataMember]
-        public float Roll, Pitch, Yaw;
+        public double Roll, Pitch, Yaw;
+
+        public Euler(double roll = 0f, double pitch = 0f, double yaw = 0)
+        {
+            this.Roll = roll;
+            this.Pitch = pitch;
+            this.Yaw = yaw;
+
+        }
 
         /// <summary>
         /// Convert to human-readable string
@@ -150,7 +158,7 @@ namespace WiimoteLib
         /// <returns>A string that represents the point</returns>
         public override string ToString()
         {
-            return string.Format("{{Roll={0}, Pitch={1}, Yaw={2}}}", Roll, Pitch, Yaw);
+            return string.Format("{{Roll={0:0.00}, Pitch={1:0:0.00}, Yaw={2:0:0.00}}}", Roll, Pitch, Yaw);
         }
 
     }
@@ -209,12 +217,8 @@ namespace WiimoteLib
 		/// Is an extension controller inserted?
 		/// </summary>
 		[DataMember]
-		public bool Extension;
-		/// <summary>
-		/// Extension controller currently inserted, if any
-		/// </summary>
-		[DataMember]
-		public ExtensionType ExtensionType;
+		public byte Extension;
+		
 		/// <summary>
 		/// Current state of Nunchuk extension
 		/// </summary>
@@ -688,18 +692,28 @@ namespace WiimoteLib
 		[DataMember]
 		public Point3F Values;
 
+
+        /// <summary>
+        /// Normalized speed data
+        /// <remarks>Values range between 0 - ?</remarks>
+        /// </summary>
+        [DataMember]
+        public Point3F Values2;
+
 		/// <summary>
 		/// Yaw/Pitch/Roll rotating "quickly" (no definition for "quickly" yet...)
 		/// </summary>
 		[DataMember]
 		public bool YawFast, PitchFast, RollFast;
 
+
         /// <summary>
-        /// Yaw/Pitch/Roll rotating "quickly" (no definition for "quickly" yet...)
-        /// Change to X,Y,Z to make more sense
+        ///  Pitch and Roll and Yaw
         /// </summary>
         [DataMember]
-        public bool XFast, YFast, ZFast;
+        public Euler Angles;
+
+     
 	}
 
 
@@ -876,7 +890,7 @@ namespace WiimoteLib
 
 		/// <summary>
 		/// Normalized accelerometer data.
-		/// <remarks>Values range between 0 - ?, but values > 3 and &lt; -3 are inaccurate.</remarks>
+		/// <remarks>Values range between 0 - 3g, but values > 3g and &lt; -3g are inaccurate.(g=9.8m/s^2)</remarks>
 		/// </summary>
 		[DataMember]
 		public Point3F Values;
@@ -895,6 +909,10 @@ namespace WiimoteLib
         [DataMember]
         public Point3F Orientation;
 
+
+        /// <summary>
+        ///  Pitch and Roll angles (Yaw can't be measured as no change in gravity)
+        /// </summary>
         [DataMember]
         public Euler Angles;
 	}
@@ -934,30 +952,44 @@ namespace WiimoteLib
 		public bool A, B, Plus, Home, Minus, One, Two, Up, Down, Left, Right;
 	}
 
+    /// <summary>
+    /// 
+    /// </summary>
+    [DataContract]
+    public enum ExtensionType:byte
+    {
+            None = 0x00,
+            Nunchuck = 0x01,
+            ClassicController = 0x02,
+            ClassicControllerPro = 0x04,
+            Guitar = 0x08,
+            Drums = 0x10,
+            MotionPlus = 0x20,
+            BalancedBoard = 0x40,
+            TaikoDrums = 0x80
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    [DataContract]
+    public enum PassThruMode : byte
+    {
+        None = 0x00,
+        Nunchuck = 0x05,
+        ClassicController = 0x07,
+      
+    }
+
+
 	/// <summary>
-	/// The extension plugged into the Wiimote
+	/// The extension number of the currently plugged into the Wiimote
 	/// </summary>
 	[DataContract]
-	public enum ExtensionType : long
+	public enum ExtensionNumber : long
 	{
 
-        //static const QWORD NUNCHUK		       = 0x000020A40000ULL;
-        //    static const QWORD CLASSIC		       = 0x010120A40000ULL;
-        //    static const QWORD GH3_GHWT_GUITAR     = 0x030120A40000ULL;
-        //    static const QWORD GHWT_DRUMS	       = 0x030120A40001ULL;
-        //    static const QWORD BALANCE_BOARD	   = 0x020420A40000ULL;
-        //    static const QWORD MOTION_PLUS		   = 0x050420A40000ULL;
-        //    static const QWORD MOTION_PLUS_DETECT  = 0x050020a60000ULL;
-        //    static const QWORD MOTION_PLUS_DETECT2 = 0x050420a60000ULL;
-        //    static const QWORD PARTIALLY_INSERTED  = 0xffffffffffffULL;
-
-      //  _id_to_extension_type[0x0000A4200000] = wiimote_extensions::Nunchuck;
-      //_id_to_extension_type[0xFF00A4200000] = wiimote_extensions::Nunchuck; //WEIRD - had a nunchuk that always gave off this ID. Was there any difference?
-      //_id_to_extension_type[0x0000A4200101] = wiimote_extensions::ClassicController;
-      //_id_to_extension_type[0x0100A4200101] = wiimote_extensions::ClassicControllerPro;
-      //_id_to_extension_type[0x0000A4200103] = wiimote_extensions::GHGuitar;
-      //_id_to_extension_type[0x0100A4200103] = wiimote_extensions::GHWorldTourDrums;
-      //_id_to_extension_type[0x0000A4200405] = wiimote_extensions::MotionPlus;
+     
 		/// <summary>
 		/// No extension
 		/// </summary>

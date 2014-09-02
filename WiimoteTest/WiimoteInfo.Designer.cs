@@ -181,8 +181,6 @@
             Mitov.SignalLab.ThreadingQueue threadingQueue1 = new Mitov.SignalLab.ThreadingQueue();
             OpenWire.Proxy.SinkPin sinkPin3 = new OpenWire.Proxy.SinkPin();
             OpenWire.Proxy.SourcePin sourcePin3 = new OpenWire.Proxy.SourcePin();
-            Mitov.SignalLab.Threading threading2 = new Mitov.SignalLab.Threading();
-            Mitov.SignalLab.ThreadingQueue threadingQueue2 = new Mitov.SignalLab.ThreadingQueue();
             this.groupBox8 = new System.Windows.Forms.GroupBox();
             this.clbButtons = new System.Windows.Forms.CheckedListBox();
             this.lblTriggerR = new System.Windows.Forms.Label();
@@ -252,9 +250,11 @@
             this.comboBox1 = new System.Windows.Forms.ComboBox();
             this.button2 = new System.Windows.Forms.Button();
             this.scope1 = new Mitov.PlotLab.Scope(this.components);
-            this.genericRealValueGen1 = new Mitov.SignalLab.GenericRealValueGen(this.components);
-            this.lowPass1 = new Mitov.SignalLab.LowPass(this.components);
+            this.MotionPlus_X = new Mitov.SignalLab.GenericRealValueGen(this.components);
             this.genericFilter1 = new Mitov.SignalLab.GenericFilter(this.components);
+            this.chkFactoryCalibration = new System.Windows.Forms.CheckBox();
+            this.chkPassThruMode = new System.Windows.Forms.CheckBox();
+            this.MotionPlusValue2_X = new Mitov.SignalLab.GenericRealValueGen(this.components);
             this.groupBox8.SuspendLayout();
             this.groupBox5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbIR)).BeginInit();
@@ -269,9 +269,9 @@
             this.groupBox11.SuspendLayout();
             this.groupBox12.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.scope1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.genericRealValueGen1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.lowPass1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.MotionPlus_X)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.genericFilter1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.MotionPlusValue2_X)).BeginInit();
             this.SuspendLayout();
             // 
             // groupBox8
@@ -1348,39 +1348,62 @@
             displayZoom1.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.scope1.Zooming = displayZoom1;
             // 
-            // genericRealValueGen1
+            // MotionPlus_X
             // 
-            this.genericRealValueGen1.ClockPin = sinkPin1;
+            this.MotionPlus_X.ClockPin = sinkPin1;
+            this.MotionPlus_X.Enabled = false;
             sourcePin1.ConnectionData = ((OpenWire.PinConnections)(resources.GetObject("sourcePin1.ConnectionData")));
-            this.genericRealValueGen1.OutputPin = sourcePin1;
-            this.genericRealValueGen1.PumpPriority = ((uint)(0u));
-            this.genericRealValueGen1.SampleRate = 100000D;
-            this.genericRealValueGen1.Generate += new Mitov.SignalLab.RealValueGenEvent(this.genericRealValueGen1_Generate);
-            // 
-            // lowPass1
-            // 
-            this.lowPass1.Alpha = 1D;
-            this.lowPass1.Frequency = 5000D;
-            sinkPin2.ConnectionData = ((OpenWire.PinConnections)(resources.GetObject("sinkPin2.ConnectionData")));
-            this.lowPass1.InputPin = sinkPin2;
-            this.lowPass1.OutputPin = sourcePin2;
-            threadingQueue1.Size = ((uint)(15u));
-            threading1.Queue = threadingQueue1;
-            this.lowPass1.Threading = threading1;
+            this.MotionPlus_X.OutputPin = sourcePin1;
+            this.MotionPlus_X.PumpPriority = ((uint)(0u));
+            this.MotionPlus_X.SampleRate = 100000D;
+            this.MotionPlus_X.Generate += new Mitov.SignalLab.RealValueGenEvent(this.genericRealValueGen1_Generate);
             // 
             // genericFilter1
             // 
-            this.genericFilter1.InputPin = sinkPin3;
-            this.genericFilter1.OutputPin = sourcePin3;
-            threadingQueue2.Size = ((uint)(15u));
-            threading2.Queue = threadingQueue2;
-            this.genericFilter1.Threading = threading2;
+            this.genericFilter1.InputPin = sinkPin2;
+            this.genericFilter1.OutputPin = sourcePin2;
+            threadingQueue1.Size = ((uint)(15u));
+            threading1.Queue = threadingQueue1;
+            this.genericFilter1.Threading = threading1;
             this.genericFilter1.ProcessData += new Mitov.SignalLab.ProcessBlockNotify(this.genericFilter1_ProcessData);
+            // 
+            // chkFactoryCalibration
+            // 
+            this.chkFactoryCalibration.AutoSize = true;
+            this.chkFactoryCalibration.Location = new System.Drawing.Point(722, 407);
+            this.chkFactoryCalibration.Name = "chkFactoryCalibration";
+            this.chkFactoryCalibration.Size = new System.Drawing.Size(135, 17);
+            this.chkFactoryCalibration.TabIndex = 47;
+            this.chkFactoryCalibration.Text = "Use Factory Calibration";
+            this.chkFactoryCalibration.UseVisualStyleBackColor = true;
+            this.chkFactoryCalibration.CheckedChanged += new System.EventHandler(this.chkFactoryCalibration_CheckedChanged);
+            // 
+            // chkPassThruMode
+            // 
+            this.chkPassThruMode.AutoSize = true;
+            this.chkPassThruMode.Location = new System.Drawing.Point(722, 430);
+            this.chkPassThruMode.Name = "chkPassThruMode";
+            this.chkPassThruMode.Size = new System.Drawing.Size(98, 17);
+            this.chkPassThruMode.TabIndex = 48;
+            this.chkPassThruMode.Text = "PassThruMode";
+            this.chkPassThruMode.UseVisualStyleBackColor = true;
+            // 
+            // MotionPlusValue2_X
+            // 
+            this.MotionPlusValue2_X.ClockPin = sinkPin3;
+            this.MotionPlusValue2_X.Enabled = false;
+            sourcePin3.ConnectionData = ((OpenWire.PinConnections)(resources.GetObject("sourcePin3.ConnectionData")));
+            this.MotionPlusValue2_X.OutputPin = sourcePin3;
+            this.MotionPlusValue2_X.PumpPriority = ((uint)(0u));
+            this.MotionPlusValue2_X.SampleRate = 100000D;
+            this.MotionPlusValue2_X.Generate += new Mitov.SignalLab.RealValueGenEvent(this.MotionPlusValue2_X_Generate);
             // 
             // WiimoteInfo
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.chkPassThruMode);
+            this.Controls.Add(this.chkFactoryCalibration);
             this.Controls.Add(this.scope1);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.comboBox1);
@@ -1424,9 +1447,9 @@
             this.groupBox11.ResumeLayout(false);
             this.groupBox12.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.scope1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.genericRealValueGen1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.lowPass1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.MotionPlus_X)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.genericFilter1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.MotionPlusValue2_X)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1503,9 +1526,11 @@
         private System.Windows.Forms.Label lblOrientation;
         public System.Windows.Forms.Label lblAccOrientation;
         private Mitov.PlotLab.Scope scope1;
-        private Mitov.SignalLab.GenericRealValueGen genericRealValueGen1;
-        private Mitov.SignalLab.LowPass lowPass1;
+        private Mitov.SignalLab.GenericRealValueGen MotionPlus_X;
         private Mitov.SignalLab.GenericFilter genericFilter1;
+        private System.Windows.Forms.CheckBox chkFactoryCalibration;
+        private System.Windows.Forms.CheckBox chkPassThruMode;
+        private Mitov.SignalLab.GenericRealValueGen MotionPlusValue2_X;
        
 
 	}

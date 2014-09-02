@@ -15,7 +15,6 @@ using System.IO;
 using System.Runtime.Serialization;
 using Microsoft.Win32.SafeHandles;
 using System.Threading;
-using KalmanFilter;
 
 namespace WiimoteLib
 {
@@ -123,12 +122,9 @@ namespace WiimoteLib
 		private const float KG2LB = 2.20462262f;
 
 
-        //Euler extended kalman filter
-        private EulerEKF EulerEKF = new EulerEKF();
+     
 
-        //Filter to remove gyros offset
-        //n = 100. n is the number os data do average and get offset
-        GyroFilter GyroFilter = new GyroFilter(200);
+      
 
         //Used to get elapsed time for filter
         private Stopwatch timer = new Stopwatch();
@@ -138,14 +134,13 @@ namespace WiimoteLib
         public static double RAD_TO_DEG = 180 / Math.PI;
         public static double DEG_TO_RAD = Math.PI / 180;
 
-        //Max gravity vector error (+-) to accept data from accel
-        //0.15 seems to be a good number. 
-        private const double GRAVITY_VARIATION = 0.15;
+      
 
         //Interleave mode for use of M+ and Extension toghter
-        private bool PASS_THRU_MODE = false;
+        protected PassThruMode PASS_THRU_MODE = PassThruMode.None;
 
 
+        public MahonyMotionPlusFuser fusionFilter;
        
 
 		/// <summary>
@@ -208,7 +203,7 @@ namespace WiimoteLib
 				// actually get the detail struct
 				if(HIDImports.SetupDiGetDeviceInterfaceDetail(hDevInfo, ref diData, ref diDetail, size, out size, IntPtr.Zero))
 				{
-					Debug.WriteLine(string.Format("{0}: {1} - {2}", index, diDetail.DevicePath, Marshal.GetLastWin32Error()));
+				//	Debug.WriteLine(string.Format("{0}: {1} - {2}", index, diDetail.DevicePath, Marshal.GetLastWin32Error()));
 
 					// open a read/write handle to our device using the DevicePath returned
 					mHandle = HIDImports.CreateFile(diDetail.DevicePath, FileAccess.ReadWrite, FileShare.ReadWrite, IntPtr.Zero, FileMode.Open, HIDImports.EFileAttributes.Overlapped, IntPtr.Zero);
@@ -227,6 +222,8 @@ namespace WiimoteLib
 							// it's a Wiimote
 							Debug.WriteLine("Found one!");
 							found = true;
+
+
 
 							// fire the callback function...if the callee doesn't care about more Wiimotes, break out
 							if(!wiimoteFound(diDetail.DevicePath))
@@ -281,26 +278,12 @@ namespace WiimoteLib
 					// create a nice .NET FileStream wrapping the handle above
 					mStream = new FileStream(mHandle, FileAccess.ReadWrite, REPORT_LENGTH, true);
 
+                    fusionFilter = new MahonyMotionPlusFuser();
+
 					// start an async read operation on it
 					BeginAsyncRead();
 
-                    //ReadWiimoteCalibration();
-                    //SetReportType2(InputReport.ReadData, true);
-                    //ReadData(0x04b00000, 8);
-                    //ReadData(0x16, 7);
-                    //ReadData(0x17, 7);
-                    //ReadData(0x18, 7);
-                    //ReadData(0x19, 7);
-                    //ReadData(0x20, 7);
-
-                   // Thread.Sleep(3000);
-                   // mAltWriteMethod = true;
-                   // ReadData(0x04a60000, 16);
-                    //ReadData(REGISTER_MOTIONPLUS_CALIBRATION, 7);
-                    //SetReportType2(InputReport.ButtonsAccel, true);
-                    //ReadData(REGISTER_EXTENSION_TYPE, 1);
-                    //ReadData(REGISTER_EXTENSION_TYPE_2,1);
-					// read the calibration info from the controller
+                   
                     try
                     {
                         ReadWiimoteCalibration();
@@ -311,6 +294,8 @@ namespace WiimoteLib
                         mAltWriteMethod = true;
                         ReadWiimoteCalibration();
                     }
+
+                    DisableMotionPlus();
 
 					// force a status check to get the state of any extensions plugged in at startup
 					GetStatus();
@@ -327,30 +312,30 @@ namespace WiimoteLib
         /// <summary>
         /// 
         /// </summary>
-        public void CheckMotionPlusCapabilities()
+        public bool CheckMotionPlusCapabilities()
         {
-            if (mWiimoteState.ExtensionType != ExtensionType.MotionPlus)
+            if ((mWiimoteState.Extension & (byte)ExtensionType.MotionPlus)!=0x00) return true;
+
+            Debug.WriteLine("Try:1 to MOTIONPLUS_DETECT");
+            BeginAsyncRead();
+            byte[] buff = ReadData(REGISTER_MOTIONPLUS_DETECT, 0x02);
+
+            if (buff[1] != 0x05)
             {
+                Thread.Sleep(3000);
+
+                Debug.WriteLine("Try:2 to MOTIONPLUS_DETECT");
                 BeginAsyncRead();
-                byte[] buff = ReadData(REGISTER_MOTIONPLUS_DETECT, 0x02);
-                Debug.WriteLine("Detected:" + (buff[1] == 0x05) + "buff:" + BitConverter.ToString(buff));
+                buff = ReadData(REGISTER_MOTIONPLUS_DETECT, 0x02);
             }
 
-            //BeginAsyncRead();
-            //byte[] buff = ReadData(0x04A40050, 16);
-            //Debug.WriteLine("Wiimote callibration1:" + BitConverter.ToString(buff));
 
+            Debug.WriteLine("Detected:" + (buff[1] == 0x05) + "buff:" + BitConverter.ToString(buff));
 
-
-
-           // reader.read(wiimote_number, 0xA600FE, 0x02, std::bind(&capability_discoverer::handle_motionplus_id_message, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-          
-           // CheckExtension
-            // BeginAsyncRead();
-           // byte[] extensionType = ReadData(REGISTER_EXTENSION_TYPE_2, 1);
-           // Debug.WriteLine("Extension byte=" + extensionType[0].ToString("x2"));
-          
+            return (buff[1] == 0x05);
         }
+             
+
 
 		/// <summary>
 		/// Initialize the MotionPlus extension
@@ -358,19 +343,23 @@ namespace WiimoteLib
 		public void InitializeMotionPlus()
 		{
            
-            // Initialize it:
-           // WriteData(REGISTER_MOTIONPLUS_INIT, 0x55);
-            //	Sleep(50);
-            // Enable it (this maps it to the standard extension port):
-          //  WriteData(REGISTER_MOTIONPLUS_ENABLE, 0x04);
+          
+        
 
-			Debug.WriteLine("InitializeMotionPlus");
-            WriteData(REGISTER_EXTENSION_INIT_1, 0x55);
-            //this also disable other extension
-            WriteData(REGISTER_MOTIONPLUS_INIT, 0x04);//0xa600fe
+			
 
 
-            //Gives STATUS if its first time else just ACK
+
+            if ((mWiimoteState.Extension & (byte)ExtensionType.MotionPlus) != 0 )
+            {
+                Debug.WriteLine("InitializeMotionPlus");
+
+                // Initialize it:
+                WriteData(0x4a600f0, 0x55);
+
+                WriteData(REGISTER_MOTIONPLUS_INIT, 0x04);//0xa600fe
+            }
+
 		}
 
 
@@ -389,11 +378,10 @@ namespace WiimoteLib
         /// </summary>
         public void DisableMotionPlus()
         {
-            if (mWiimoteState.ExtensionType == ExtensionType.MotionPlus)
-            {
+           
                 WriteData(REGISTER_EXTENSION_INIT_1, 0x55);
                 WriteData(REGISTER_EXTENSION_INIT_2, 0x00);
-            }
+            
         }
 
 		/// <summary>
@@ -473,14 +461,13 @@ namespace WiimoteLib
 				case InputReport.ButtonsAccel:
 					ParseButtons(buff);
 					ParseAccel(buff);
-                    PositionFilter();
+                   
                   	break;
 				case InputReport.IRAccel:
 					ParseButtons(buff);
 					ParseAccel(buff);
 					ParseIR(buff);
-                    PositionFilter();
-                    PositionFilter();
+                  
 					break;
 				case InputReport.ButtonsExtension:
 					ParseButtons(buff);
@@ -490,14 +477,14 @@ namespace WiimoteLib
 					ParseButtons(buff);
 					ParseAccel(buff);
 					ParseExtension(buff, 6);
-                    PositionFilter();
+                  
 					break;
 				case InputReport.IRExtensionAccel:
 					ParseButtons(buff);
 					ParseAccel(buff);
 					ParseIR(buff);
 					ParseExtension(buff, 16);
-                    PositionFilter();
+                  
 					break;
 				case InputReport.Status:
 					Debug.WriteLine("******** STATUS ********");
@@ -516,42 +503,88 @@ namespace WiimoteLib
 
 					// extension connected?
 					bool extension = (buff[3] & 0x02) != 0;
-					Debug.WriteLine("Extension, Old: " + mWiimoteState.Extension + ", New: " + extension);
+					Debug.WriteLine("Extension, Old: " + (mWiimoteState.Extension!=0x00) + ", New: " + extension);
 
 
 
-                    if (mWiimoteState.Extension != extension)// || extensionType[0] == 0x04)
-                    {
-                        mWiimoteState.Extension = extension;
-
-                     
+                 
 
                         if (extension)
                         {
-                            BeginAsyncRead();
+                                //read extension type
+                                BeginAsyncRead();
 
-                            byte[] extensionType = ReadData(REGISTER_EXTENSION_TYPE_2, 1);
-                            Debug.WriteLine("Extension byte=" + extensionType[0].ToString("x2"));
+                                buff = ReadData(REGISTER_EXTENSION_TYPE, 6);
+                                long extensionNumber = ((long)buff[0] << 40) | ((long)buff[1] << 32) | ((long)buff[2]) << 24 | ((long)buff[3]) << 16 | ((long)buff[4]) << 8 | buff[5];
 
-                            BeginAsyncRead();
-                            InitializeExtension(extensionType[0]);
-                        }
-                        else
-                            mWiimoteState.ExtensionType = ExtensionType.None;
+                               
+
+
+                                if (PASS_THRU_MODE==PassThruMode.None)
+                                {
+                                    if ((extensionNumber & 0x0000ffffffff) == (long)ExtensionNumber.MotionPlus)
+                                    {
+                                        DisableMotionPlus();
+                                    }
+                                }
+                                else//NOT TESTED (PSEUDO)
+                                {
+                                    if ((extensionNumber & 0x0000ffffffff) ==(long)ExtensionNumber.Nunchuk)
+                                        if (CheckMotionPlusCapabilities())
+                                        {
+                                            // DisableMotionPlus();/???
+                                            WriteData(REGISTER_MOTIONPLUS_INIT, (byte)PassThruMode.Nunchuck);
+                                        }
+
+                                        else if ((extensionNumber & 0x0000ffffffff) == (long)ExtensionNumber.ClassicController)
+                                            if (CheckMotionPlusCapabilities())
+                                            {
+                                                // DisableMotionPlus();/???
+                                                WriteData(REGISTER_MOTIONPLUS_INIT, (byte)PassThruMode.ClassicController);
+                                            }
+
+                                }
+
+
+
+
+                                InitializeExtension(extensionNumber);
+                        
+                        
+
+                           // mWiimoteState.ExtensionType = ExtensionNumber.None;
+
 
                         // only fire the extension changed event if we have a real extension (i.e. not a balance board)
-                        if (WiimoteExtensionChanged != null && mWiimoteState.ExtensionType != ExtensionType.BalanceBoard)
-                            WiimoteExtensionChanged(this, new WiimoteExtensionChangedEventArgs(mWiimoteState.ExtensionType, mWiimoteState.Extension));
+                        //if (WiimoteExtensionChanged != null && mWiimoteState.ExtensionType != ExtensionNumber.BalanceBoard)
+                       //     WiimoteExtensionChanged(this, new WiimoteExtensionChangedEventArgs(mWiimoteState.ExtensionType, mWiimoteState.Extension));
+
+
+                      
+                     }
+                    else
+                    {
+                        if (CheckMotionPlusCapabilities())
+                        {
+                            mStatusDone.Set();
+
+                           
+                            //initalization would call GetStatus automatically
+                            InitializeMotionPlus();
+                        }
                     }
                     
-					mStatusDone.Set();
+                    
+					  mStatusDone.Set();
+
+                   
 					break;
 				case InputReport.ReadData:
 					ParseButtons(buff);
 					ParseReadData(buff);
 					break;
 				case InputReport.OutputReportAck:
-                    Debug.WriteLine(type.ToString() + "  DATA:" + BitConverter.ToString(buff));
+                    //Debug.WriteLine(type.ToString() + "  DATA:" + BitConverter.ToString(buff));
 //					Debug.WriteLine("ack: " + buff[0] + " " +  buff[1] + " " +buff[2] + " " +buff[3] + " " +buff[4]);
 					mWriteDone.Set();
 					break;
@@ -561,10 +594,11 @@ namespace WiimoteLib
                     //(a1) 3f BB BB AA II II II II II II II II II II II II II II II II II II
                 case InputReport.InterleaveButtonsAccellIR1:
                     ParseButtons(buff);
+                    ParseAccel(type, buff);
                     break;
                 case InputReport.InterleaveButtonsAccellIR2:
                     ParseButtons(buff);
-
+                    ParseAccel(type, buff);
                     CalculateAccelRotation();
                     break;
 				default:
@@ -578,53 +612,46 @@ namespace WiimoteLib
 		/// <summary>
 		/// Handles setting up an extension when plugged in
 		/// </summary>
-		private void InitializeExtension(byte extensionType)
+         private void InitializeExtension(long type)
+		//private void InitializeExtension(byte extensionType)
+        //private void InitializeExtension()
 		{
-			Debug.WriteLine("InitExtension");
+			
 
 			// only initialize if it's not a MotionPlus
-			if(extensionType != 0x04)
-			{
-				WriteData(REGISTER_EXTENSION_INIT_1, 0x55);
-				WriteData(REGISTER_EXTENSION_INIT_2, 0x00);
-			}
+            //if (extensionType != 0x04)
+            //{
+            //    WriteData(REGISTER_EXTENSION_INIT_1, 0x55);
+            //    WriteData(REGISTER_EXTENSION_INIT_2, 0x00);
+            //}
 
 			// start reading again
-			BeginAsyncRead();
+			//BeginAsyncRead();
 
-			byte[] buff = ReadData(REGISTER_EXTENSION_TYPE, 6);
-			long type = ((long)buff[0] << 40) | ((long)buff[1] << 32) | ((long)buff[2]) << 24 | ((long)buff[3]) << 16 | ((long)buff[4]) << 8 | buff[5];
+            byte[] buff;
+			//byte[] buff = ReadData(REGISTER_EXTENSION_TYPE, 6);
+			//long type = ((long)buff[0] << 40) | ((long)buff[1] << 32) | ((long)buff[2]) << 24 | ((long)buff[3]) << 16 | ((long)buff[4]) << 8 | buff[5];
 
             //alex winx think need mask(as first 4bytes aren't inportant or subversion) except
             //ExtensionType.Guitar and ExtensionType.Drums having same base (seem have same hardware)
-            if(type != (long)ExtensionType.Guitar && type!=(long)ExtensionType.Drums)
+            if(type != (long)ExtensionNumber.Guitar && type!=(long)ExtensionNumber.Drums)
             type=type & 0x0000ffffffff;
 
-			switch((ExtensionType)type)
+			switch((ExtensionNumber)type)
 			{
-				case ExtensionType.None:
-				case ExtensionType.ParitallyInserted:
-					mWiimoteState.Extension = false;
-					mWiimoteState.ExtensionType = ExtensionType.None;
+				case ExtensionNumber.None:
+				case ExtensionNumber.ParitallyInserted:
+				
+					//mWiimoteState.ExtensionType = ExtensionNumber.None;
 					return;
-				case ExtensionType.Nunchuk:
-				case ExtensionType.ClassicController:
-				case ExtensionType.Guitar:
-				case ExtensionType.BalanceBoard:
-				case ExtensionType.Drums:
-				case ExtensionType.TaikoDrum:
-				case ExtensionType.MotionPlus:
-					mWiimoteState.ExtensionType = (ExtensionType)type;
-					this.SetReportType(InputReport.ButtonsExtension, true);
-					break;
-				default:
-					throw new WiimoteException("Unknown extension controller found: " + type.ToString("x"));
-			}
+				case ExtensionNumber.Nunchuk:
+                    if(PASS_THRU_MODE==(byte)PassThruMode.None)
+                        mWiimoteState.Extension = (byte)ExtensionType.Nunchuck;
+                    else 
+                        mWiimoteState.Extension |= (byte)ExtensionType.Nunchuck;
 
-			switch(mWiimoteState.ExtensionType)
-			{
-				case ExtensionType.Nunchuk:
-					buff = ReadData(REGISTER_EXTENSION_CALIBRATION, 16);
+
+                    buff = ReadData(REGISTER_EXTENSION_CALIBRATION, 16);
 
                     //X0,Y0,Z0 are actully MID
                     //XG,YG,ZG are actually MAX
@@ -634,7 +661,7 @@ namespace WiimoteLib
 					mWiimoteState.NunchukState.CalibrationInfo.AccelCalibration.XG = buff[4];
 					mWiimoteState.NunchukState.CalibrationInfo.AccelCalibration.YG = buff[5];
 					mWiimoteState.NunchukState.CalibrationInfo.AccelCalibration.ZG = buff[6];
-                    	mWiimoteState.NunchukState.CalibrationInfo.MaxX = buff[8]; //seem this calibration isn't correct
+                    mWiimoteState.NunchukState.CalibrationInfo.MaxX = buff[8]; //seem this calibration isn't correct
 					mWiimoteState.NunchukState.CalibrationInfo.MinX = buff[9];
 					mWiimoteState.NunchukState.CalibrationInfo.MidX = buff[10];
 					mWiimoteState.NunchukState.CalibrationInfo.MaxY = buff[11];
@@ -650,9 +677,14 @@ namespace WiimoteLib
                     Debug.WriteLine(mWiimoteState.NunchukState.CalibrationInfo.MaxX + " " + mWiimoteState.NunchukState.CalibrationInfo.MidX + " " + mWiimoteState.NunchukState.CalibrationInfo.MinX);
                     Debug.WriteLine(mWiimoteState.NunchukState.CalibrationInfo.AccelCalibration.X0 + " " + mWiimoteState.NunchukState.CalibrationInfo.AccelCalibration.XG);
 
-					break;
-				case ExtensionType.ClassicController:
-					buff = ReadData(REGISTER_EXTENSION_CALIBRATION, 16);
+                    break;
+				case ExtensionNumber.ClassicController:
+                    if(PASS_THRU_MODE==(byte)PassThruMode.None)
+                          mWiimoteState.Extension = (int)ExtensionType.ClassicController;
+                      else
+                         mWiimoteState.Extension |= (int)ExtensionType.ClassicController;
+
+                    buff = ReadData(REGISTER_EXTENSION_CALIBRATION, 16);
 
 					mWiimoteState.ClassicControllerState.CalibrationInfo.MaxXL = (byte)(buff[0] >> 2);
 					mWiimoteState.ClassicControllerState.CalibrationInfo.MinXL = (byte)(buff[1] >> 2);
@@ -677,9 +709,14 @@ namespace WiimoteLib
 					mWiimoteState.ClassicControllerState.CalibrationInfo.MaxTriggerL = 31;
 					mWiimoteState.ClassicControllerState.CalibrationInfo.MinTriggerR = 0;
 					mWiimoteState.ClassicControllerState.CalibrationInfo.MaxTriggerR = 31;
-					break;
-				case ExtensionType.BalanceBoard:
-					buff = ReadData(REGISTER_EXTENSION_CALIBRATION, 32);
+                break;
+				case ExtensionNumber.Guitar:
+                     mWiimoteState.Extension = (int)ExtensionType.Guitar;
+                break;
+				case ExtensionNumber.BalanceBoard:
+                    mWiimoteState.Extension = (int)ExtensionType.BalancedBoard;
+
+                    buff = ReadData(REGISTER_EXTENSION_CALIBRATION, 32);
 
 					mWiimoteState.BalanceBoardState.CalibrationInfo.Kg0.TopRight =		(short)((short)buff[4] << 8 | buff[5]);
 					mWiimoteState.BalanceBoardState.CalibrationInfo.Kg0.BottomRight =	(short)((short)buff[6] << 8 | buff[7]);
@@ -695,44 +732,55 @@ namespace WiimoteLib
 					mWiimoteState.BalanceBoardState.CalibrationInfo.Kg34.BottomRight =	(short)((short)buff[22] << 8 | buff[23]);
 					mWiimoteState.BalanceBoardState.CalibrationInfo.Kg34.TopLeft =		(short)((short)buff[24] << 8 | buff[25]);
 					mWiimoteState.BalanceBoardState.CalibrationInfo.Kg34.BottomLeft =	(short)((short)buff[26] << 8 | buff[27]);
-					break;
-				case ExtensionType.MotionPlus:
+                break;
+				case ExtensionNumber.Drums:
+                    mWiimoteState.Extension = (int)ExtensionType.Drums;
+                break;
+				case ExtensionNumber.TaikoDrum:
+                     mWiimoteState.Extension = (byte)ExtensionType.TaikoDrums;
+                break;
+				case ExtensionNumber.MotionPlus:
+                     if(PASS_THRU_MODE==(byte)PassThruMode.None)
+                         mWiimoteState.Extension = (byte)ExtensionType.MotionPlus;
+                    else
+                         mWiimoteState.Extension |= (byte)ExtensionType.MotionPlus;
+
 					// someday...
                     ////New mapping. Yaw, Pitch and Roll 
                     ////Yaw = Z axis
                     ////Pitch = X axis
                     ////Roll = Y axis
 
-                    //buff = ReadData(REGISTER_EXTENSION_CALIBRATION, 32);
-                 
+                    buff = ReadData(REGISTER_EXTENSION_CALIBRATION, 32);
 
-                    ////TEstando sem o offset - deixa que o filtro remove todo offset. Só fazer isso em slow
-                    ////Not sure this order is correct. Need to check with other genuines MP
-                    //mWiimoteState.MotionPlusState.CalibrationInfo.GyroCalibration.Z0 = (short)((short)buff[0] << 6 | buff[1] >> 2);
-                    //mWiimoteState.MotionPlusState.CalibrationInfo.GyroCalibration.Y0 = (short)((short)buff[2] << 6 | buff[3] >> 2);
-                    //mWiimoteState.MotionPlusState.CalibrationInfo.GyroCalibration.X0 = (short)((short)buff[4] << 6 | buff[5] >> 2);
 
-                    ////Slow offset
-                    //mWiimoteState.MotionPlusState.CalibrationInfo.GyroFastCalibration.Z0 = (short)((short)buff[0 + 16] << 6 | buff[1 + 16] >> 2);
-                    //mWiimoteState.MotionPlusState.CalibrationInfo.GyroFastCalibration.Y0 = (short)((short)buff[2 + 16] << 6 | buff[3 + 16] >> 2);
-                    //mWiimoteState.MotionPlusState.CalibrationInfo.GyroFastCalibration.X0 = (short)((short)buff[4 + 16] << 6 | buff[5 + 16] >> 2);
+                    //TEstando sem o offset - deixa que o filtro remove todo offset. Só fazer isso em slow
+                    //Not sure this order is correct. Need to check with other genuines MP
+                    mWiimoteState.MotionPlusState.CalibrationInfo.GyroCalibration.Z0 = (short)((short)buff[0] << 6 | buff[1] >> 2);
+                    mWiimoteState.MotionPlusState.CalibrationInfo.GyroCalibration.Y0 = (short)((short)buff[2] << 6 | buff[3] >> 2);
+                    mWiimoteState.MotionPlusState.CalibrationInfo.GyroCalibration.X0 = (short)((short)buff[4] << 6 | buff[5] >> 2);
 
-                    ////Calibration for Epson - YAW - GZ
-                    //ushort EpsonG1 = (ushort)((ushort)buff[6] << 8 | buff[7]);
-                    //ushort EpsonG2 = (ushort)((ushort)buff[8] << 8 | buff[9]);
-                    ////Counts/deg/s for epson. Shoulld be ~4.4
+                    //Slow offset
+                    mWiimoteState.MotionPlusState.CalibrationInfo.GyroFastCalibration.Z0 = (short)((short)buff[0 + 16] << 6 | buff[1 + 16] >> 2);
+                    mWiimoteState.MotionPlusState.CalibrationInfo.GyroFastCalibration.Y0 = (short)((short)buff[2 + 16] << 6 | buff[3 + 16] >> 2);
+                    mWiimoteState.MotionPlusState.CalibrationInfo.GyroFastCalibration.X0 = (short)((short)buff[4 + 16] << 6 | buff[5 + 16] >> 2);
+
+                    //////Calibration for Epson - YAW - GZ
+                    ushort EpsonG1 = (ushort)((ushort)buff[6] << 8 | buff[7]);
+                    ushort EpsonG2 = (ushort)((ushort)buff[8] << 8 | buff[9]);
+                    //Counts/deg/s for epson. Shoulld be ~4.4
                     //float Epson =4.4f;// (float)EpsonG2 / (float)EpsonG1;
 
                     ////Calibration for IDG600 - Pitch&Roll - GX,GY
-                    //ushort IDGG1 = (ushort)((ushort)buff[22] << 8 | buff[23]);
-                    //ushort IDGG2 = (ushort)((ushort)buff[24] << 8 | buff[25]);
-                    ////COunts/deg/s for IDG. Should be ~3.8
+                    ushort IDGG1 = (ushort)((ushort)buff[22] << 8 | buff[23]);
+                    ushort IDGG2 = (ushort)((ushort)buff[24] << 8 | buff[25]);
+                    //COunts/deg/s for IDG. Should be ~3.8
                     //float IDG =3.8f;// (float)IDGG2 / (float)IDGG1;
 
                     ////Factor Slow/Fast
-                    //ushort FactorSF1 = (ushort)((ushort)buff[10] << 8 | buff[11]);
-                    //ushort FactorSF2 = (ushort)((ushort)buff[12] << 8 | buff[13]);
-                    ////Slow/Fast factor. Should be ~4 for original montion plus. 5 for my chinese MP.
+                    ushort FactorSF1 = (ushort)((ushort)buff[10] << 8 | buff[11]);
+                    ushort FactorSF2 = (ushort)((ushort)buff[12] << 8 | buff[13]);
+                    //Slow/Fast factor. Should be ~4 for original montion plus. 5 for my chinese MP.
                     //float FactorSF =5;// (float)FactorSF2 / (float)FactorSF1;
 
                     ////Pith and Roll - IDG
@@ -748,17 +796,14 @@ namespace WiimoteLib
                     ////YAW - Epson
                     //mWiimoteState.MotionPlusState.CalibrationInfo.GyroFastCalibration.ZG = FactorSF;
                     //mWiimoteState.MotionPlusState.CalibrationInfo.GyroCalibration.ZG = Epson * FactorSF;
-
-                    //Reset filter
-                    GyroFilter.Reset();
-                    
 					break;
-				case ExtensionType.Guitar:
-				case ExtensionType.Drums:
-				case ExtensionType.TaikoDrum:
-					// there appears to be no calibration for these controllers
-					break;
+				default:
+					throw new WiimoteException("Unknown extension controller found: " + type.ToString("x"));
 			}
+
+            Debug.WriteLine("InitExtension");
+
+          
 		}
 
 		/// <summary>
@@ -836,16 +881,21 @@ namespace WiimoteLib
        
 
             
-            //(N-512)/1024 * 3.0V * (9.8 m/s^2)/(0.300 V/g)
+         
 
 			mWiimoteState.AccelState.RawValues6b.X = buff[3];
 			mWiimoteState.AccelState.RawValues6b.Y = buff[4];
 			mWiimoteState.AccelState.RawValues6b.Z = buff[5];
 
             //Note that X has 10 bits of precision, while Y and Z only have 9. For consistency, they are assumed all to have a 10-bit range and the LSB is always set to zero for Y and Z.
-            mWiimoteState.AccelState.RawValues8b.X = (buff[3] << 2) | (buff[0]>>5 & 0x3);// (buff[0] >> 5 & 0x3);
+            mWiimoteState.AccelState.RawValues8b.X = (buff[3] << 2) | (buff[0]>>5 & 0x3);// 
             mWiimoteState.AccelState.RawValues8b.Y =  (buff[4] << 2) | (buff[1]>>4 & 0x2);//
             mWiimoteState.AccelState.RawValues8b.Z = (buff[5] << 2) | (buff[1]>>5 & 0x2);//
+
+
+            //raw_accel.x = (u8)trim(accel.x * (calib.one_g.x - calib.zero_g.x) + calib.zero_g.x);
+            //raw_accel.y = (u8)trim(accel.y * (calib.one_g.y - calib.zero_g.y) + calib.zero_g.y);
+            //raw_accel.z = (u8)trim(accel.z * (calib.one_g.z - calib.zero_g.z) + calib.zero_g.z);
 
             if (USE_FACTORY_CALIBRATION)
             {
@@ -855,7 +905,23 @@ namespace WiimoteLib
                                                 ((float)mWiimoteState.AccelCalibrationInfo.YG - mWiimoteState.AccelCalibrationInfo.Y0);
                 mWiimoteState.AccelState.Values.Z = (float)((float)mWiimoteState.AccelState.RawValues6b.Z - mWiimoteState.AccelCalibrationInfo.Z0) /
                                                 ((float)mWiimoteState.AccelCalibrationInfo.ZG - mWiimoteState.AccelCalibrationInfo.Z0);
+           
+
+    //(N-512)/1024 * 3.0V * (9.8 g)/(0.300 V/g)
+
+            //TODO try with 3.3V
+            mWiimoteState.AccelState.Values2.X = ((float)((mWiimoteState.AccelState.RawValues8b.X - (mWiimoteState.AccelCalibrationInfo.X0 <<2))) / 1024f) * (3f  / 0.3f);
+            mWiimoteState.AccelState.Values2.Y = ((float)((mWiimoteState.AccelState.RawValues8b.Y - (mWiimoteState.AccelCalibrationInfo.Y0 << 2))) / 1024f) * (3f   / 0.3f);
+            mWiimoteState.AccelState.Values2.Z = ((float)((mWiimoteState.AccelState.RawValues8b.Z  - (mWiimoteState.AccelCalibrationInfo.Z0 <<2))) / 1024f) * (3f   / 0.3f);
+
+            //mWiimoteState.AccelState.Values.X = mWiimoteState.AccelState.Values2.X;
+            //mWiimoteState.AccelState.Values.Y = mWiimoteState.AccelState.Values2.Y;
+            //mWiimoteState.AccelState.Values.Z = mWiimoteState.AccelState.Values2.Z;
+            
+            
             }
+
+
 
             //could go +/-3g
             if(mWiimoteState.AccelState.Values.X > 3)  mWiimoteState.AccelState.Values.X = 3;
@@ -1021,25 +1087,19 @@ namespace WiimoteLib
 		/// <param name="offset">Offset into data buffer</param>
 		private void ParseExtension(byte[] buff, int offset)
 		{
-			switch(mWiimoteState.ExtensionType)
-			{
-				case ExtensionType.Nunchuk:
+			
+                if  ((mWiimoteState.Extension & (byte)ExtensionType.Nunchuck) !=0){
+				
 
-                    //if (extension_data.size() >= 6)
-                    //{
-                    //    output.valid_data_flags |= dolphiimote_NUNCHUCK_VALID;
-
-                    //    output.nunchuck.stick_x = extension_data[0];
-                    //    output.nunchuck.stick_y = extension_data[1];
-                    //    output.nunchuck.x = (extension_data[2] << 2) | (extension_data[5] & 0x0C) >> 2;
-                    //    output.nunchuck.y = (extension_data[3] << 2) | (extension_data[5] & 0x30) >> 4;
-                    //    output.nunchuck.z = (extension_data[4] << 2) | (extension_data[5] & 0xC0) >> 6;
-
-                    //    output.nunchuck.buttons = ~(extension_data[5]) & 0x3;
-                    //}
+                  
 
                     //interleave mode
-                    //if (extension_data.size() >= 6 && !(extension_data[5] & 0x03))
+                   
+
+                    if(PASS_THRU_MODE == PassThruMode.Nunchuck){
+                        if((buff[offset + 5] & 0x03)==0x00){
+
+                             //if (extension_data.size() >= 6 && !(extension_data[5] & 0x03))
                     //{
                     //    output.valid_data_flags |= dolphiimote_NUNCHUCK_VALID;
 
@@ -1052,19 +1112,54 @@ namespace WiimoteLib
                     //    output.nunchuck.buttons = ~(extension_data[5] >> 2) & 0x3;
                     //}
 
-					mWiimoteState.NunchukState.RawJoystick.X = buff[offset];
-					mWiimoteState.NunchukState.RawJoystick.Y = buff[offset + 1];
 
-                   // (extension_data[2] << 2) | (extension_data[5] & 0x0C) >> 2;
 
-                    //10bit precision but calibration data is 8bit
-                  //  mWiimoteState.NunchukState.AccelState.RawValues.X =( buff[offset + 2]<<2) | ((buff[offset + 5] & 0x0C) >> 2);
-					mWiimoteState.NunchukState.AccelState.RawValues6b.X = buff[offset + 2];
-					mWiimoteState.NunchukState.AccelState.RawValues6b.Y = buff[offset + 3];
-					mWiimoteState.NunchukState.AccelState.RawValues6b.Z = buff[offset + 4];
+                        mWiimoteState.NunchukState.RawJoystick.X = buff[offset];
+                        mWiimoteState.NunchukState.RawJoystick.Y = buff[offset + 1];
 
-					mWiimoteState.NunchukState.C = (buff[offset + 5] & 0x02) == 0;
-					mWiimoteState.NunchukState.Z = (buff[offset + 5] & 0x01) == 0;
+
+                        mWiimoteState.NunchukState.AccelState.RawValues6b.X = buff[offset + 2];
+                        mWiimoteState.NunchukState.AccelState.RawValues6b.Y = buff[offset + 3];
+                        mWiimoteState.NunchukState.AccelState.RawValues6b.Z = buff[offset + 4];
+
+
+                        mWiimoteState.NunchukState.AccelState.RawValues8b.X = (buff[offset + 2]<<2) | (buff[offset + 5] & 0x10) >> 4;
+                        mWiimoteState.NunchukState.AccelState.RawValues8b.Y = (buff[offset + 3] << 2)| (buff[offset + 5] & 0x30) >> 4;;
+                        mWiimoteState.NunchukState.AccelState.RawValues8b.Z = (buff[offset + 4]<< 2)| (buff[offset + 5] & 0xC0) >> 6;
+
+
+
+                        }else return;
+                        
+                    }  
+                    else
+                    {
+
+                        mWiimoteState.NunchukState.RawJoystick.X = buff[offset];
+                        mWiimoteState.NunchukState.RawJoystick.Y = buff[offset + 1];
+
+                    
+                      
+                        mWiimoteState.NunchukState.AccelState.RawValues6b.X = buff[offset + 2];
+                        mWiimoteState.NunchukState.AccelState.RawValues6b.Y = buff[offset + 3];
+                        mWiimoteState.NunchukState.AccelState.RawValues6b.Z = buff[offset + 4];
+
+                         //    output.nunchuck.x = (extension_data[2] << 2) | (extension_data[5] & 0x0C) >> 2;
+                    //    output.nunchuck.y = (extension_data[3] << 2) | (extension_data[5] & 0x30) >> 4;
+                    //    output.nunchuck.z = (extension_data[4] << 2) | (extension_data[5] & 0xC0) >> 6;
+
+
+
+                         //10bit precision but calibration data is 8bit
+                         mWiimoteState.NunchukState.AccelState.RawValues8b.X = (buff[offset + 2]<<2) | (buff[offset + 5] & 0x0C) >> 2;
+                        mWiimoteState.NunchukState.AccelState.RawValues8b.Y = (buff[offset + 3] << 2)| (buff[offset+5] & 0x30) >> 4;;
+                        mWiimoteState.NunchukState.AccelState.RawValues8b.Z = (buff[offset + 4]<< 2)| (buff[offset + 5] & 0xC0) >> 6;
+
+                        mWiimoteState.NunchukState.C = (buff[offset + 5] & 0x02) == 0;
+                        mWiimoteState.NunchukState.Z = (buff[offset + 5] & 0x01) == 0;
+                    }
+
+
 
                    // float range=mWiimoteState.NunchukState.CalibrationInfo.AccelCalibration.XG<<2 - mWiimoteState.NunchukState.CalibrationInfo.AccelCalibration.X0<<2;
                   //  mWiimoteState.NunchukState.AccelState.Values.X = ((float)(mWiimoteState.NunchukState.AccelState.RawValues.X - mWiimoteState.NunchukState.CalibrationInfo.AccelCalibration.X0<<2)) /range;
@@ -1098,9 +1193,9 @@ namespace WiimoteLib
 //}
 
 
-					break;
+                }
 
-				case ExtensionType.ClassicController:
+				 if  ((mWiimoteState.Extension & (byte)ExtensionType.ClassicController) !=0){
                     //if (extension_data.size() >= 6)
                     //{
                     //    output.valid_data_flags |= dolphiimote_CLASSIC_CONTROLLER_VALID;
@@ -1119,7 +1214,11 @@ namespace WiimoteLib
 
 
 
-                    //interleave mode
+                  
+
+                     if(PASS_THRU_MODE == PassThruMode.ClassicController){
+
+                       //interleave mode    
                     //if (extension_data.size() >= 6)
                     //{
                     //    if ((extension_data[5] & 0x03) == 0)
@@ -1139,38 +1238,68 @@ namespace WiimoteLib
                     //    }
                     //}
 
+                         if ((buff[offset + 5] & 0x03) == 0)
+                         {
+                             mWiimoteState.ClassicControllerState.RawJoystickL.X = (byte)(buff[offset] & 0x3E);
+                             mWiimoteState.ClassicControllerState.RawJoystickL.Y = (byte)(buff[offset + 1] & 0x3E);
+
+                             mWiimoteState.ClassicControllerState.RawJoystickR.X = (byte)((buff[offset] & 0xC0) >> 3) | ((buff[offset + 1] & 0xC0) >> 5) | ((buff[offset + 2] & 0xC0) >> 7);
+                             mWiimoteState.ClassicControllerState.RawJoystickR.Y = (byte)(buff[offset+2] & 0x1F);
+
+                             mWiimoteState.ClassicControllerState.RawTriggerL = (byte)(((buff[offset+2] & 0x60) >> 2) | ((buff[offset+3] & 0xE0) >> 5));
+                             mWiimoteState.ClassicControllerState.RawTriggerR = (byte)(buff[offset + 3] & 0x1f);
 
 
+                             //TODO CHECK if buttons are the same as in normal mode
+                             mWiimoteState.ClassicControllerState.ButtonState.TriggerR = (buff[offset + 4] & 0x02) == 0;
+                             mWiimoteState.ClassicControllerState.ButtonState.Plus = (buff[offset + 4] & 0x04) == 0;
+                             mWiimoteState.ClassicControllerState.ButtonState.Home = (buff[offset + 4] & 0x08) == 0;
+                             mWiimoteState.ClassicControllerState.ButtonState.Minus = (buff[offset + 4] & 0x10) == 0;
+                             mWiimoteState.ClassicControllerState.ButtonState.TriggerL = (buff[offset + 4] & 0x20) == 0;
+                             mWiimoteState.ClassicControllerState.ButtonState.Down = (buff[offset + 4] & 0x40) == 0;
+                             mWiimoteState.ClassicControllerState.ButtonState.Right = (buff[offset + 4] & 0x80) == 0;
+
+                             mWiimoteState.ClassicControllerState.ButtonState.Up = (buff[offset + 5] & 0x01) == 0;
+                             mWiimoteState.ClassicControllerState.ButtonState.Left = (buff[offset + 5] & 0x02) == 0;
+                             mWiimoteState.ClassicControllerState.ButtonState.ZR = (buff[offset + 5] & 0x04) == 0;
+                             mWiimoteState.ClassicControllerState.ButtonState.X = (buff[offset + 5] & 0x08) == 0;
+                             mWiimoteState.ClassicControllerState.ButtonState.A = (buff[offset + 5] & 0x10) == 0;
+                             mWiimoteState.ClassicControllerState.ButtonState.Y = (buff[offset + 5] & 0x20) == 0;
+                             mWiimoteState.ClassicControllerState.ButtonState.B = (buff[offset + 5] & 0x40) == 0;
+                             mWiimoteState.ClassicControllerState.ButtonState.ZL = (buff[offset + 5] & 0x80) == 0;
+                         }
+                         else return;
+                     }
+                     else 
+                    {
+
+                        mWiimoteState.ClassicControllerState.RawJoystickL.X = (byte)(buff[offset] & 0x3f);
+                        mWiimoteState.ClassicControllerState.RawJoystickL.Y = (byte)(buff[offset + 1] & 0x3f);
+                        mWiimoteState.ClassicControllerState.RawJoystickR.X = (byte)((buff[offset + 2] >> 7) | (buff[offset + 1] & 0xc0) >> 5 | (buff[offset] & 0xc0) >> 3);
+                        mWiimoteState.ClassicControllerState.RawJoystickR.Y = (byte)(buff[offset + 2] & 0x1f);
+
+                        mWiimoteState.ClassicControllerState.RawTriggerL = (byte)(((buff[offset + 2] & 0x60) >> 2) | (buff[offset + 3] >> 5));
+                        mWiimoteState.ClassicControllerState.RawTriggerR = (byte)(buff[offset + 3] & 0x1f);
+
+                        mWiimoteState.ClassicControllerState.ButtonState.TriggerR = (buff[offset + 4] & 0x02) == 0;
+                        mWiimoteState.ClassicControllerState.ButtonState.Plus = (buff[offset + 4] & 0x04) == 0;
+                        mWiimoteState.ClassicControllerState.ButtonState.Home = (buff[offset + 4] & 0x08) == 0;
+                        mWiimoteState.ClassicControllerState.ButtonState.Minus = (buff[offset + 4] & 0x10) == 0;
+                        mWiimoteState.ClassicControllerState.ButtonState.TriggerL = (buff[offset + 4] & 0x20) == 0;
+                        mWiimoteState.ClassicControllerState.ButtonState.Down = (buff[offset + 4] & 0x40) == 0;
+                        mWiimoteState.ClassicControllerState.ButtonState.Right = (buff[offset + 4] & 0x80) == 0;
+
+                        mWiimoteState.ClassicControllerState.ButtonState.Up = (buff[offset + 5] & 0x01) == 0;
+                        mWiimoteState.ClassicControllerState.ButtonState.Left = (buff[offset + 5] & 0x02) == 0;
+                        mWiimoteState.ClassicControllerState.ButtonState.ZR = (buff[offset + 5] & 0x04) == 0;
+                        mWiimoteState.ClassicControllerState.ButtonState.X = (buff[offset + 5] & 0x08) == 0;
+                        mWiimoteState.ClassicControllerState.ButtonState.A = (buff[offset + 5] & 0x10) == 0;
+                        mWiimoteState.ClassicControllerState.ButtonState.Y = (buff[offset + 5] & 0x20) == 0;
+                        mWiimoteState.ClassicControllerState.ButtonState.B = (buff[offset + 5] & 0x40) == 0;
+                        mWiimoteState.ClassicControllerState.ButtonState.ZL = (buff[offset + 5] & 0x80) == 0;
+                    }
 
 
-
-
-
-
-					mWiimoteState.ClassicControllerState.RawJoystickL.X = (byte)(buff[offset] & 0x3f);
-					mWiimoteState.ClassicControllerState.RawJoystickL.Y = (byte)(buff[offset + 1] & 0x3f);
-					mWiimoteState.ClassicControllerState.RawJoystickR.X = (byte)((buff[offset + 2] >> 7) | (buff[offset + 1] & 0xc0) >> 5 | (buff[offset] & 0xc0) >> 3);
-					mWiimoteState.ClassicControllerState.RawJoystickR.Y = (byte)(buff[offset + 2] & 0x1f);
-
-					mWiimoteState.ClassicControllerState.RawTriggerL = (byte)(((buff[offset + 2] & 0x60) >> 2) | (buff[offset + 3] >> 5));
-					mWiimoteState.ClassicControllerState.RawTriggerR = (byte)(buff[offset + 3] & 0x1f);
-
-					mWiimoteState.ClassicControllerState.ButtonState.TriggerR	= (buff[offset + 4] & 0x02) == 0;
-					mWiimoteState.ClassicControllerState.ButtonState.Plus		= (buff[offset + 4] & 0x04) == 0;
-					mWiimoteState.ClassicControllerState.ButtonState.Home		= (buff[offset + 4] & 0x08) == 0;
-					mWiimoteState.ClassicControllerState.ButtonState.Minus		= (buff[offset + 4] & 0x10) == 0;
-					mWiimoteState.ClassicControllerState.ButtonState.TriggerL	= (buff[offset + 4] & 0x20) == 0;
-					mWiimoteState.ClassicControllerState.ButtonState.Down		= (buff[offset + 4] & 0x40) == 0;
-					mWiimoteState.ClassicControllerState.ButtonState.Right		= (buff[offset + 4] & 0x80) == 0;
-
-					mWiimoteState.ClassicControllerState.ButtonState.Up			= (buff[offset + 5] & 0x01) == 0;
-					mWiimoteState.ClassicControllerState.ButtonState.Left		= (buff[offset + 5] & 0x02) == 0;
-					mWiimoteState.ClassicControllerState.ButtonState.ZR			= (buff[offset + 5] & 0x04) == 0;
-					mWiimoteState.ClassicControllerState.ButtonState.X			= (buff[offset + 5] & 0x08) == 0;
-					mWiimoteState.ClassicControllerState.ButtonState.A			= (buff[offset + 5] & 0x10) == 0;
-					mWiimoteState.ClassicControllerState.ButtonState.Y			= (buff[offset + 5] & 0x20) == 0;
-					mWiimoteState.ClassicControllerState.ButtonState.B			= (buff[offset + 5] & 0x40) == 0;
-					mWiimoteState.ClassicControllerState.ButtonState.ZL			= (buff[offset + 5] & 0x80) == 0;
 
 					if(mWiimoteState.ClassicControllerState.CalibrationInfo.MaxXL != 0x00)
 						mWiimoteState.ClassicControllerState.JoystickL.X = (float)((float)mWiimoteState.ClassicControllerState.RawJoystickL.X - mWiimoteState.ClassicControllerState.CalibrationInfo.MidXL) / 
@@ -1195,9 +1324,10 @@ namespace WiimoteLib
 					if(mWiimoteState.ClassicControllerState.CalibrationInfo.MaxTriggerR != 0x00)
 						mWiimoteState.ClassicControllerState.TriggerR = (mWiimoteState.ClassicControllerState.RawTriggerR) / 
 						(float)(mWiimoteState.ClassicControllerState.CalibrationInfo.MaxTriggerR - mWiimoteState.ClassicControllerState.CalibrationInfo.MinTriggerR);
-					break;
+                 }
 
-				case ExtensionType.Guitar:
+                
+				 if  ((mWiimoteState.Extension & (byte)ExtensionType.Guitar) !=0){
 					mWiimoteState.GuitarState.GuitarType = ((buff[offset] & 0x80) == 0) ? GuitarType.GuitarHeroWorldTour : GuitarType.GuitarHero3;
 
 					mWiimoteState.GuitarState.ButtonState.Plus		= (buff[offset + 4] & 0x04) == 0;
@@ -1266,9 +1396,9 @@ namespace WiimoteLib
 							mWiimoteState.GuitarState.TouchbarState.Orange = true;
 							break;
 					}
-					break;
+                 }
 
-				case ExtensionType.Drums:
+				 if  ((mWiimoteState.Extension & (byte)ExtensionType.Drums) !=0){
 					// it appears the joystick values are only 6 bits
 					mWiimoteState.DrumsState.RawJoystick.X	= (buff[offset + 0] & 0x3f);
 					mWiimoteState.DrumsState.RawJoystick.Y	= (buff[offset + 1] & 0x3f);
@@ -1317,9 +1447,9 @@ namespace WiimoteLib
 						}
 					}
 
-					break;
+                 }
 
-				case ExtensionType.BalanceBoard:
+				 if  ((mWiimoteState.Extension & (byte)ExtensionType.BalancedBoard) !=0){
 					mWiimoteState.BalanceBoardState.SensorValuesRaw.TopRight = (short)((short)buff[offset + 0] << 8 | buff[offset + 1]);
 					mWiimoteState.BalanceBoardState.SensorValuesRaw.BottomRight = (short)((short)buff[offset + 2] << 8 | buff[offset + 3]);
 					mWiimoteState.BalanceBoardState.SensorValuesRaw.TopLeft = (short)((short)buff[offset + 4] << 8 | buff[offset + 5]);
@@ -1343,15 +1473,17 @@ namespace WiimoteLib
 
 					mWiimoteState.BalanceBoardState.CenterOfGravity.X = ((float)(Kx - 1) / (float)(Kx + 1)) * (float)(-BSL / 2);
 					mWiimoteState.BalanceBoardState.CenterOfGravity.Y = ((float)(Ky - 1) / (float)(Ky + 1)) * (float)(-BSW / 2);
-					break;
+                 }
 
-				case ExtensionType.TaikoDrum:
+				 if  ((mWiimoteState.Extension & (byte)ExtensionType.TaikoDrums) !=0){
 					mWiimoteState.TaikoDrumState.OuterLeft  = (buff[offset + 5] & 0x20) == 0;
 					mWiimoteState.TaikoDrumState.InnerLeft  = (buff[offset + 5] & 0x40) == 0;
 					mWiimoteState.TaikoDrumState.InnerRight = (buff[offset + 5] & 0x10) == 0;
 					mWiimoteState.TaikoDrumState.OuterRight = (buff[offset + 5] & 0x08) == 0;
-					break;
-				case ExtensionType.MotionPlus:
+                 }
+
+                 if ((mWiimoteState.Extension & (byte)ExtensionType.MotionPlus) != 0)
+                 {
             //            short yaw   = ((unsigned short)buff[offset+3] & 0xFC)<<6 |
             //               (unsigned short)buff[offset+0];
             //short pitch = ((unsigned short)buff[offset+5] & 0xFC)<<6 |
@@ -1425,33 +1557,59 @@ namespace WiimoteLib
                     unitsAtZeroDeg.Z=8233;//.0;
                      const float gain =0.05f;// 1f / 20f;//
 
+                    //fast
+                   // (N-8192)/16384 * 3.0V * (1 deg/s)/.0005V * (Pi radians)/(180 deg)
+
+                    //slow
+                     // (N-8192)/16384 * 3.0V * (1 deg/s)/.002V * (Pi radians)/(180 deg)
+
                      const float slowFactor =   500/8192f;//deg/unit
-                    const float fastFactor = 2000/8192f ;//deg/unit
+                     const float fastFactor = 2000/8192f ;//deg/unit
                             // (value - offest) *gain;
                     //  short yaw   = ((unsigned short)buff[offset+3] & 0xFC)<<6 |
             //               (unsigned short)buff[offset+0];
-
-					mWiimoteState.MotionPlusState.YawFast =		((buff[offset + 3] & 0x02) >> 1) == 0;
-					mWiimoteState.MotionPlusState.PitchFast =	((buff[offset + 3] & 0x01) >> 0) == 0;
-					mWiimoteState.MotionPlusState.RollFast =	((buff[offset + 4] & 0x02) >> 1) == 0;
+                     if (PASS_THRU_MODE != 0x0)
+                     {
 
 
-                   
-                    mWiimoteState.MotionPlusState.RawValues.Z = (buff[offset + 0] | (buff[offset + 3] & 0xfc) << 6);//YAW
-					mWiimoteState.MotionPlusState.RawValues.Y = (buff[offset + 1] | (buff[offset + 4] & 0xfc) << 6);//ROLL
-					mWiimoteState.MotionPlusState.RawValues.X = (buff[offset + 2] | (buff[offset + 5] & 0xfc) << 6);//PITCH
+
+
+
+
+
+                     }else {
+                         mWiimoteState.MotionPlusState.YawFast = ((buff[offset + 3] & 0x02) >> 1) == 0;
+                         mWiimoteState.MotionPlusState.PitchFast = ((buff[offset + 3] & 0x01) >> 0) == 0;
+                         mWiimoteState.MotionPlusState.RollFast = ((buff[offset + 4] & 0x02) >> 1) == 0;
+
+
+
+                         mWiimoteState.MotionPlusState.RawValues.Z = (buff[offset + 0] | (buff[offset + 3] & 0xfc) << 6);//YAW
+                         mWiimoteState.MotionPlusState.RawValues.Y = (buff[offset + 1] | (buff[offset + 4] & 0xfc) << 6);//ROLL
+                         mWiimoteState.MotionPlusState.RawValues.X = (buff[offset + 2] | (buff[offset + 5] & 0xfc) << 6);//PITCH
+                     }
+
 
                     //mask should be 0xfc(1111 1100) not fa 
                    // mWiimoteState.MotionPlusState.RawValues.X = (buff[offset + 0] | (buff[offset + 3] & 0xfa) << 6);
                   //  mWiimoteState.MotionPlusState.RawValues.Y = (buff[offset + 1] | (buff[offset + 4] & 0xfa) << 6);
                   //  mWiimoteState.MotionPlusState.RawValues.Z = (buff[offset + 2] | (buff[offset + 5] & 0xfa) << 6);
 
-                 
 
-                    //alex winx
+
+                    //alex winx deg/s
                     mWiimoteState.MotionPlusState.Values.X = mWiimoteState.MotionPlusState.PitchFast ? (mWiimoteState.MotionPlusState.RawValues.X - unitsAtZeroDeg.X) * fastFactor : (mWiimoteState.MotionPlusState.RawValues.X - unitsAtZeroDeg.X) * slowFactor;
                     mWiimoteState.MotionPlusState.Values.Y = mWiimoteState.MotionPlusState.RollFast ? (mWiimoteState.MotionPlusState.RawValues.Y - unitsAtZeroDeg.Y) * fastFactor : (mWiimoteState.MotionPlusState.RawValues.Y - unitsAtZeroDeg.Y) * slowFactor;
                     mWiimoteState.MotionPlusState.Values.Z = mWiimoteState.MotionPlusState.YawFast ? (mWiimoteState.MotionPlusState.RawValues.Z - unitsAtZeroDeg.Z) * fastFactor : (mWiimoteState.MotionPlusState.RawValues.Z - unitsAtZeroDeg.Z) * slowFactor;
+
+
+                    //alex winx deg/s
+                    mWiimoteState.MotionPlusState.Values2.X = mWiimoteState.MotionPlusState.PitchFast ? 2*2000f * (mWiimoteState.MotionPlusState.RawValues.X - unitsAtZeroDeg.X)/16384f  :  (2*500f * (mWiimoteState.MotionPlusState.RawValues.X - unitsAtZeroDeg.X))/16384f ;
+                    mWiimoteState.MotionPlusState.Values2.Y = mWiimoteState.MotionPlusState.RollFast ? 2*2000f * (mWiimoteState.MotionPlusState.RawValues.Y - unitsAtZeroDeg.Y) / 16384f : (2*500f * (mWiimoteState.MotionPlusState.RawValues.Y - unitsAtZeroDeg.Y)) / 16384f;
+                    mWiimoteState.MotionPlusState.Values2.Z = mWiimoteState.MotionPlusState.YawFast ? 2*2000f * (mWiimoteState.MotionPlusState.RawValues.Z - unitsAtZeroDeg.Z) / 16384f : (2*500f * (mWiimoteState.MotionPlusState.RawValues.Z - unitsAtZeroDeg.Z)) / 16384f;
+              
+                   // mWiimoteState.MotionPlusState.Angles.Yaw = mWiimoteState.MotionPlusState.Values.X;
+
 
 
                     // New mapping - more intuitive and consistent
@@ -1509,8 +1667,8 @@ namespace WiimoteLib
 
 
 
-                  Debug.WriteLineIf((buff[offset + 4] & 0x01)==1,"Extension is connected in continuation of Motion");
-					break;
+                  //Debug.WriteLineIf((buff[offset + 4] & 0x01)==1,"Extension is connected in continuation of Motion");
+					
 			}
 		}
 
@@ -1574,7 +1732,7 @@ namespace WiimoteLib
 			// this appears to change the report type to 0x31
 			byte[] buff = ReadData(REGISTER_CALIBRATION, 7);
 
-            Debug.WriteLine("Wiimote callibration:"+BitConverter.ToString(buff));
+            
 
 			mWiimoteState.AccelCalibrationInfo.X0 = buff[0];
 			mWiimoteState.AccelCalibrationInfo.Y0 = buff[1];
@@ -1583,7 +1741,7 @@ namespace WiimoteLib
 			mWiimoteState.AccelCalibrationInfo.YG = buff[5];
 			mWiimoteState.AccelCalibrationInfo.ZG = buff[6];
 
-           
+            Debug.WriteLine("Wiimote callibration X0:" + buff[0] + " Y0:" + buff[1] + " Z0:" + buff[2] + " XG:" + buff[4]+" YG:"+buff[5]+" ZG:"+buff[6]);
 
 		}
 
@@ -1618,7 +1776,7 @@ namespace WiimoteLib
 		public void SetReportType(InputReport type, IRSensitivity irSensitivity, bool continuous)
 		{
 			// only 1 report type allowed for the BB
-			if(mWiimoteState.ExtensionType == ExtensionType.BalanceBoard)
+			if((mWiimoteState.Extension & (byte)ExtensionType.BalancedBoard) != 0)
 				type = InputReport.ButtonsExtension;
 
 			switch(type)
@@ -1707,6 +1865,11 @@ namespace WiimoteLib
 					mWiimoteState.LEDState.LED3,
 					mWiimoteState.LEDState.LED4);
 		}
+
+        public void SetMode(PassThruMode mode)
+        {
+            PASS_THRU_MODE = mode;
+        }
 
 		/// <summary>
 		/// Retrieve the current status of the Wiimote and extensions.  Replaces GetBatteryLevel() since it was poorly named.
@@ -1859,7 +2022,7 @@ namespace WiimoteLib
 //144	        buf[4]=(unsigned char)((len>>8) & 0xFF);
 //145	        buf[5]=(unsigned char)(len & 0xFF);
 
-
+            Debug.WriteLine("ReadMemory :" + AddressToName(address));
 			WriteReport(buff);
 
             if (!mReadDone.WaitOne(1000, false))
@@ -1888,7 +2051,7 @@ namespace WiimoteLib
                 case 0x04a400fe:			name="REGISTER_EXTENSION_TYPE_2"; break;
                 case 0x04a40020:	name=" REGISTER_EXTENSION_CALIBRATION"; break;
                 case 0x0016:name="REGISTER_CALIBRATION";   break;//standard
-                case 0x04a600fe: name="REGISTER_MOTIONPLUS_INIT";			 break;
+                case 0x04a600fe: name = "REGISTER_MOTIONPLUS_DETECT"; break;
                 case REGISTER_MOTIONPLUS_CALIBRATION: name = "REGISTER_MOTIONPLUS_CALIBRATION"; break;
                 default: name = "Unknown address"; break;
             }
@@ -1929,124 +2092,9 @@ namespace WiimoteLib
 		}
 
 
-        /// <summary>
-        /// Reset Filter
-        /// </summary>
-        public void ResetPositionFilter()
-        {
-            //Zero Yaw because we don1t have reference for that
-            mWiimoteState.Position.Yaw = 0;
+       
 
-            //Reset Kalman and Gyro
-            GyroFilter.Reset();
-            EulerEKF.Reset();
-        }
-
-        /// <summary>
-        /// Ser another parameters do EKF filter
-        /// </summary>
-        public void ParamPositionFilter(double Q, double R, double P)
-        {
-            EulerEKF.Qparam = Q;
-            EulerEKF.Rparam = R;
-            EulerEKF.Pparam = P;
-            EulerEKF.Reset();
-        }
-
-        /// <summary>
-        /// Calculate de wiimote position based on accel, gyros and kalman filter.
-        /// Roll : +- PI
-        /// Pitch: +- PI/2
-        /// </summary>
-        public void PositionFilter()
-        {
-            return;
-
-            //Check is timer is already on
-            if (!timer.IsRunning)
-            {
-                timer.Start();
-            }
-
-            //Getting some data
-            double ax = mWiimoteState.AccelState.Values.X;
-            double ay = mWiimoteState.AccelState.Values.Y;
-            double az = mWiimoteState.AccelState.Values.Z;
-
-            double gx = mWiimoteState.MotionPlusState.Values.X * DEG_TO_RAD;
-            double gy = mWiimoteState.MotionPlusState.Values.Y * DEG_TO_RAD;
-            double gz = mWiimoteState.MotionPlusState.Values.Z * DEG_TO_RAD;
-
-            //Remove Offset from gyros
-            GyroFilter.removeOffset(ref gx, ref gy, ref gz);
-
-            double aroll;
-            double apitch;
-            double ayaw;
-
-            //Calculate vetor size and normalize
-            double mod = Math.Sqrt(ax * ax + ay * ay + az * az);
-            ax = ax / mod;
-            ay = ay / mod;
-            az = az / mod;
-
-            //Time elapsed since last call
-            long time = timer.ElapsedMilliseconds;
-            double dt = 1e-3 * (double)(time - lastTime);
-            lastTime = time;
-            //Run kalman prediction based on last position and Gyros
-            /* Little explain to use this strange sequence:
-             * The Kalman algoritm uses Euler angle, and the reference system is NED - North(x), East(y), Down(z)
-             * which is a different from the accell and gyro hardware of wiimote and motion plus.
-             * As the math for NED if easily available on internet and more educational I prefered to use this reference system
-             * and correct the data input for the kalman filter,instead of correct the kalman math.
-             * The relation is:
-             * Kalman(Roll(x) = p) = hardware(-gy)
-             * Kalman(Pitch(y) = q) = hardware(-gx)
-             * Kalman(Yaw(z) = r) = hardware(-gz)
-             */
-            EulerEKF.Predict(-gy, -gx, -gz, dt);
-
-            //If mod (gravity vector) is close to 1g 
-            if (Math.Abs(mod - 1) <= GRAVITY_VARIATION)
-            {
-                //Uhhuu...good measure, rock'n roll
-                aroll = Math.Atan2(ax, az);
-                apitch = -Math.Asin(ay);
-                //there is no reference to get yaw.Could be zero or last Yaw value. May use IR in future
-                ayaw = mWiimoteState.Position.Yaw;
-                //Uncomment lines bellow if you want just gyros and no correction from accell
-                //aroll = mWiimoteState.Position.Roll;
-                //apitch = mWiimoteState.Position.Pitch;
-
-            }
-            else
-            {
-                //Accel measure gives crazy G. Use last position.
-                aroll = mWiimoteState.Position.Roll;
-                apitch = mWiimoteState.Position.Pitch;
-                ayaw = mWiimoteState.Position.Yaw;
-            }
-
-
-            //Run kalman estimate (kind of correction) based on prediction and position from Accel
-            EulerEKF.Estimate(aroll, apitch, ayaw);
-
-            //Save euler output to wiistate. Units are radian.
-            double roll;
-            double pitch;
-            double yaw;
-
-            EulerEKF.GetState(out roll, out pitch, out yaw);
-            mWiimoteState.Position.Roll = (float)(roll);
-            mWiimoteState.Position.Pitch = (float)(pitch);
-            mWiimoteState.Position.Yaw = (float)(yaw);
-
-            //Update gyro filtered data
-            mWiimoteState.MotionPlusState.FilteredValues.X = (float)(gx * RAD_TO_DEG);
-            mWiimoteState.MotionPlusState.FilteredValues.Y = (float)(gy * RAD_TO_DEG);
-            mWiimoteState.MotionPlusState.FilteredValues.Z = (float)(gz * RAD_TO_DEG);
-        }
+      
 
 
  

@@ -20,7 +20,7 @@ namespace WiimoteLib
 		/// <summary>
 		/// The extenstion type inserted or removed
 		/// </summary>
-		public ExtensionType ExtensionType;
+		public ExtensionNumber ExtensionType;
 		/// <summary>
 		/// Whether the extension was inserted or removed
 		/// </summary>
@@ -31,7 +31,7 @@ namespace WiimoteLib
 		/// </summary>
 		/// <param name="type">The extension type inserted or removed</param>
 		/// <param name="inserted">Whether the extension was inserted or removed</param>
-		public WiimoteExtensionChangedEventArgs(ExtensionType type, bool inserted)
+		public WiimoteExtensionChangedEventArgs(ExtensionNumber type, bool inserted)
 		{
 			ExtensionType = type;
 			Inserted = inserted;
