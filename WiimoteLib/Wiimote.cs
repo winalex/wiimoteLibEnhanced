@@ -120,15 +120,7 @@ namespace WiimoteLib
 
 		// kilograms to pounds
 		private const float KG2LB = 2.20462262f;
-
-
-     
-
-      
-
-        //Used to get elapsed time for filter
-        private Stopwatch timer = new Stopwatch();
-        private long lastTime = 0;
+  
 
         //Convert some units
         public static double RAD_TO_DEG = 180 / Math.PI;
@@ -140,7 +132,7 @@ namespace WiimoteLib
         protected PassThruMode PASS_THRU_MODE = PassThruMode.None;
 
 
-        public MahonyMotionPlusFuser fusionFilter;
+        
        
 
 		/// <summary>
@@ -278,7 +270,7 @@ namespace WiimoteLib
 					// create a nice .NET FileStream wrapping the handle above
 					mStream = new FileStream(mHandle, FileAccess.ReadWrite, REPORT_LENGTH, true);
 
-                    fusionFilter = new MahonyMotionPlusFuser();
+                   
 
 					// start an async read operation on it
 					BeginAsyncRead();
@@ -1093,12 +1085,12 @@ namespace WiimoteLib
 
                   
 
-                    //interleave mode
+                 
                    
 
                     if(PASS_THRU_MODE == PassThruMode.Nunchuck){
                         if((buff[offset + 5] & 0x03)==0x00){
-
+   //interleave mode
                              //if (extension_data.size() >= 6 && !(extension_data[5] & 0x03))
                     //{
                     //    output.valid_data_flags |= dolphiimote_NUNCHUCK_VALID;
@@ -1123,9 +1115,9 @@ namespace WiimoteLib
                         mWiimoteState.NunchukState.AccelState.RawValues6b.Z = buff[offset + 4];
 
 
-                        mWiimoteState.NunchukState.AccelState.RawValues8b.X = (buff[offset + 2]<<2) | (buff[offset + 5] & 0x10) >> 4;
-                        mWiimoteState.NunchukState.AccelState.RawValues8b.Y = (buff[offset + 3] << 2)| (buff[offset + 5] & 0x30) >> 4;;
-                        mWiimoteState.NunchukState.AccelState.RawValues8b.Z = (buff[offset + 4]<< 2)| (buff[offset + 5] & 0xC0) >> 6;
+                        mWiimoteState.NunchukState.AccelState.RawValues8b.X = (buff[offset + 2]<<1) | (buff[offset + 5] & 0x10) >> 4;
+                        mWiimoteState.NunchukState.AccelState.RawValues8b.Y = (buff[offset + 3] << 1)| (buff[offset + 5] & 0x30) >> 4;;
+                        mWiimoteState.NunchukState.AccelState.RawValues8b.Z = ((buff[offset + 4]& ~0x1) << 1) | (buff[offset + 5] & 0xC0) >> 6;
 
 
 

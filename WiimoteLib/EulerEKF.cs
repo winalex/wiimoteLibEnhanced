@@ -2073,14 +2073,22 @@ namespace WiimoteLib
     /// <summary>
     /// Euler Extended Kalman Filter (EKF) Library for Wiimote + MotionPlus
     /// </summary>
-    public class EulerEKF
+    public class KalmanEulerFilter
     {
         private Matrix K,A, z, H, Q, R, xhat, P, Pp, xp;
         private double Qvalue, Rvalue, Pvalue;
+        private double currentARoll;
+        private double currentAPitch;
+        private double currentAYaw;
 
         //Max gravity vector error (+-) to accept data from accel
         //0.15 seems to be a good number. 
         private const double GRAVITY_VARIATION = 0.15;
+
+        /// <summary>
+        /// Gets or sets the sample period.
+        /// </summary>
+        public float SamplePeriod { get; set; }
 
         /// <summary>
         /// Kalman filter parameter Q
@@ -2135,11 +2143,16 @@ namespace WiimoteLib
         /// P is initial covariance error. Should be big (~10).
         /// Q = 0.01, R=6, P = 10 are good starting values.
         /// </summary>
-        public EulerEKF()
+        public KalmanEulerFilter(float samplePeriod)
         {
+
+            SamplePeriod = samplePeriod;
+
             Qvalue = 0.01;
             Rvalue = 6;
             Pvalue = 10;
+
+
             Reset();
         }
 
@@ -2332,22 +2345,29 @@ namespace WiimoteLib
             //double gz = mWiimoteState.MotionPlusState.Values.Z * DEG_TO_RAD;
 
             //Remove Offset from gyros
-            GyroFilter.removeOffset(ref gx, ref gy, ref gz);
+           // GyroFilter.removeOffset(ref gx, ref gy, ref gz);
 
-            double aroll;
-            double apitch;
-            double ayaw;
+           // double aroll;
+          //  double apitch;
+          //  double ayaw;
 
             //Calculate vetor size and normalize
-            double mod = Math.Sqrt(ax * ax + ay * ay + az * az);
-            ax = ax / mod;
-            ay = ay / mod;
-            az = az / mod;
+            double mod = 1/Math.Sqrt(ax * ax + ay * ay + az * az);
+            //double mod = Math.Sqrt(ax * ax + ay * ay + az * az);
+           
+            //ax = ax / mod;
+            //ay = ay / mod;
+            //az = az / mod;
+
+            ax = ax * mod;
+            ay = ay * mod;
+            az = az * mod;
 
             //Time elapsed since last call
-            long time = timer.ElapsedMilliseconds;
-            double dt = 1e-3 * (double)(time - lastTime);
-            lastTime = time;
+            //long time = timer.ElapsedMilliseconds;
+            //double dt = 1e-3 * (double)(time - lastTime);
+            //lastTime = time;
+
             //Run kalman prediction based on last position and Gyros
             /* Little explain to use this strange sequence:
              * The Kalman algoritm uses Euler angle, and the reference system is NED - North(x), East(y), Down(z)
@@ -2359,47 +2379,55 @@ namespace WiimoteLib
              * Kalman(Pitch(y) = q) = hardware(-gx)
              * Kalman(Yaw(z) = r) = hardware(-gz)
              */
-            this.Predict(-gy, -gx, -gz, dt);
+            //this.Predict(-gy, -gx, -gz, dt);
+            this.Predict(-gy, -gx, -gz, SamplePeriod);
+
 
             //If mod (gravity vector) is close to 1g 
             if (Math.Abs(mod - 1) <= GRAVITY_VARIATION)
             {
                 //Uhhuu...good measure, rock'n roll
-                aroll = Math.Atan2(ax, az);
-                apitch = -Math.Asin(ay);
+                currentARoll = Math.Atan2(ax, az);
+                currentAPitch = -Math.Asin(ay);
                 //there is no reference to get yaw.Could be zero or last Yaw value. May use IR in future
-                ayaw = mWiimoteState.Position.Yaw;
+               
+
+                ////Uhhuu...good measure, rock'n roll
+                //aroll = Math.Atan2(ax, az);
+                //apitch = -Math.Asin(ay);
+                ////there is no reference to get yaw.Could be zero or last Yaw value. May use IR in future
+                //ayaw = currentAYaw;
                 //Uncomment lines bellow if you want just gyros and no correction from accell
                 //aroll = mWiimoteState.Position.Roll;
                 //apitch = mWiimoteState.Position.Pitch;
 
             }
-            else
-            {
-                //Accel measure gives crazy G. Use last position.
-                aroll = mWiimoteState.Position.Roll;
-                apitch = mWiimoteState.Position.Pitch;
-                ayaw = mWiimoteState.Position.Yaw;
-            }
+            //else
+            //{
+            //    //Accel measure gives crazy G. Use last position.
+            //    aroll = currentARoll;
+            //    apitch = currentAPitch;
+            //    ayaw = currentAYaw;
+            //}
 
 
             //Run kalman estimate (kind of correction) based on prediction and position from Accel
-            this.Estimate(aroll, apitch, ayaw);
+            this.Estimate(currentARoll, currentAPitch, currentAYaw);
 
             //Save euler output to wiistate. Units are radian.
-            double roll;
-            double pitch;
-            double yaw;
+            //double roll;
+            //double pitch;
+            //double yaw;
 
-            this.GetState(out roll, out pitch, out yaw);
-            mWiimoteState.Position.Roll = (float)(roll);
-            mWiimoteState.Position.Pitch = (float)(pitch);
-            mWiimoteState.Position.Yaw = (float)(yaw);
+            //this.GetState(out roll, out pitch, out yaw);
+            //mWiimoteState.Position.Roll = (float)(roll);
+            //mWiimoteState.Position.Pitch = (float)(pitch);
+            //mWiimoteState.Position.Yaw = (float)(yaw);
 
             //Update gyro filtered data
-            mWiimoteState.MotionPlusState.FilteredValues.X = (float)(gx * RAD_TO_DEG);
-            mWiimoteState.MotionPlusState.FilteredValues.Y = (float)(gy * RAD_TO_DEG);
-            mWiimoteState.MotionPlusState.FilteredValues.Z = (float)(gz * RAD_TO_DEG);
+            //mWiimoteState.MotionPlusState.FilteredValues.X = (float)(gx * RAD_TO_DEG);
+            //mWiimoteState.MotionPlusState.FilteredValues.Y = (float)(gy * RAD_TO_DEG);
+            //mWiimoteState.MotionPlusState.FilteredValues.Z = (float)(gz * RAD_TO_DEG);
         }
 
 
@@ -2417,18 +2445,6 @@ namespace WiimoteLib
         }
 
 
-        /// <summary>
-        /// Reset Filter
-        /// </summary>
-        public void ResetPositionFilter()
-        {
-            //Zero Yaw because we don1t have reference for that
-            mWiimoteState.Position.Yaw = 0;
-
-            //Reset Kalman and Gyro
-            GyroFilter.Reset();
-            EulerEKF.Reset();
-        }
 
 
 
@@ -2494,20 +2510,28 @@ namespace WiimoteLib
 
 
 
-    public class KalmanMotionPlusFuser
+    public class KalmanMotionPlusFuser:IFuser
     {
         private readonly SamplePeriodCounter motionPlusPeriodCounter;
-        private EulerEKF kalmanAHRS;
+        private KalmanEulerFilter kalmanAHRS;
+        private GyroFilter gyroFilter;
+        private Euler Angles;
+        //Convert some units
+        public static double RAD_TO_DEG = 180 / Math.PI;
+        public static double DEG_TO_RAD = Math.PI / 180;
 
         public KalmanMotionPlusFuser()
         {
-            motionPlusPeriodCounter = new SamplePeriodCounter();
+            Angles = new Euler();
+            gyroFilter = new GyroFilter(200);
+            motionPlusPeriodCounter = new SamplePeriodCounter(1000);
+            kalmanAHRS = new KalmanEulerFilter(motionPlusPeriodCounter.SamplePeriod);
         }
 
         public void HandleIMUData(double yawDown, double pitchLeft, double rollLeft, double accX, double accY, double accZ)
         {
-            if (EnsureKalmanReady())
-                kalmanAHRS.Update((float)(rollLeft * (Math.PI / 180)), (float)(pitchLeft * (Math.PI / 180)), (float)(yawDown * (Math.PI / 180)), (float)accX, (float)accY, (float)accZ);
+            if (motionPlusPeriodCounter.Update())
+                kalmanAHRS.Update((float)(rollLeft * DEG_TO_RAD), (float)(pitchLeft * DEG_TO_RAD), (float)(yawDown * DEG_TO_RAD), (float)accX, (float)accY, (float)accZ);
         }
 
 
@@ -2515,32 +2539,34 @@ namespace WiimoteLib
         {
             get
             {
-                if (kalmanAHRS == null)
-                    return new Euler();//0, 0, 0);
-
-                //var calculator = new Quaternion();
-                //calculator.Update(kalmanAHRS.Quaternion[0], kalmanAHRS.Quaternion[1], kalmanAHRS.Quaternion[2],
-                //                 kalmanAHRS.Quaternion[3]);
+               kalmanAHRS.GetState(out Angles.Roll, out Angles.Pitch, out Angles.Yaw);
 
 
-                return new Euler(calculator.Yaw * (180 / Math.PI), calculator.Pitch * (180 / Math.PI),
-                                       calculator.Roll * (180 / Math.PI));
+                Angles.Yaw *= RAD_TO_DEG;
+                Angles.Roll *= RAD_TO_DEG;
+                Angles.Pitch *= RAD_TO_DEG;
+
+                return Angles;
             }
         }
 
-        private bool EnsureKalmanReady()
+        
+
+
+
+
+        /// <summary>
+        /// Reset Filter
+        /// </summary>
+        public void ResetFuser()
         {
-            if (kalmanAHRS != null)
-                return true;
+            //Zero Yaw because we don1t have reference for that
+            //mWiimoteState.Position.Yaw = 0;
 
-            if (motionPlusPeriodCounter.Update())
-            {
-                kalmanAHRS = new EulerEKF(motionPlusPeriodCounter.SamplePeriod);
-                motionPlusPeriodCounter.Stop();
-                return true;
-            }
+            //Reset Kalman and Gyro
+            gyroFilter.Reset();
 
-            return false;
+            kalmanAHRS.Reset();
         }
     }
 }

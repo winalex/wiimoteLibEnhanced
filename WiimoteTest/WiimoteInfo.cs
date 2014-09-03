@@ -24,12 +24,18 @@ namespace WiimoteTest
 		private Bitmap b = new Bitmap(256, 192, PixelFormat.Format24bppRgb);
 		private Graphics g;
 		private Wiimote mWiimote;
+        private IFuser fuser;
 
-		public WiimoteInfo()
-		{
-			InitializeComponent();
-			g = Graphics.FromImage(b);
-		}
+
+
+        public WiimoteInfo()
+        {
+            InitializeComponent();
+            g = Graphics.FromImage(b);
+
+            //AHRS=new MahonyAHRS(
+            fuser = new KalmanMotionPlusFuser();
+        }
 
 		public WiimoteInfo(Wiimote wm) : this()
 		{
@@ -213,10 +219,10 @@ namespace WiimoteTest
 					clbSpeed.SetItemChecked(1, ws.MotionPlusState.PitchFast);
 					clbSpeed.SetItemChecked(2, ws.MotionPlusState.RollFast);
 
-                    mWiimote.fusionFilter.HandleIMUData(ws.MotionPlusState.Values.Z, ws.MotionPlusState.Values.X, ws.MotionPlusState.Values.Y, ws.AccelState.Values2.X, ws.AccelState.Values2.Y, ws.AccelState.Values2.Z);
+                    fuser.HandleIMUData(ws.MotionPlusState.Values.Z, ws.MotionPlusState.Values.X, ws.MotionPlusState.Values.Y, ws.AccelState.Values2.X, ws.AccelState.Values2.Y, ws.AccelState.Values2.Z);
 
 
-                    lblMotionPlus.Text= mWiimote.fusionFilter.FusedValues.ToString();
+                    lblMotionPlus.Text= fuser.FusedValues.ToString();
 
 					
 			}
