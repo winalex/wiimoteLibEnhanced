@@ -270,7 +270,7 @@ namespace WiimoteLib
 					// create a nice .NET FileStream wrapping the handle above
 					mStream = new FileStream(mHandle, FileAccess.ReadWrite, REPORT_LENGTH, true);
 
-                   
+                    DisableMotionPlus();
 
 					// start an async read operation on it
 					BeginAsyncRead();
@@ -287,7 +287,7 @@ namespace WiimoteLib
                         ReadWiimoteCalibration();
                     }
 
-                    DisableMotionPlus();
+                    
 
 					// force a status check to get the state of any extensions plugged in at startup
 					GetStatus();
@@ -319,8 +319,17 @@ namespace WiimoteLib
                 Debug.WriteLine("Try:2 to MOTIONPLUS_DETECT");
                 BeginAsyncRead();
                 buff = ReadData(REGISTER_MOTIONPLUS_DETECT, 0x02);
-            }
+           
 
+                if (buff[1] != 0x05)
+                {
+                    Thread.Sleep(3000);
+
+                    Debug.WriteLine("Try:3 to MOTIONPLUS_DETECT");
+                    BeginAsyncRead();
+                    buff = ReadData(REGISTER_MOTIONPLUS_DETECT, 0x02);
+                }
+            }
 
             Debug.WriteLine("Detected:" + (buff[1] == 0x05) + "buff:" + BitConverter.ToString(buff));
 
@@ -342,7 +351,7 @@ namespace WiimoteLib
 
 
 
-            if ((mWiimoteState.Extension & (byte)ExtensionType.MotionPlus) != 0 )
+            if ((mWiimoteState.Extension & (byte)ExtensionType.MotionPlus) == 0 )
             {
                 Debug.WriteLine("InitializeMotionPlus");
 
@@ -373,7 +382,10 @@ namespace WiimoteLib
            
                 WriteData(REGISTER_EXTENSION_INIT_1, 0x55);
                 WriteData(REGISTER_EXTENSION_INIT_2, 0x00);
-            
+
+                this.WiimoteState.Extension &= (byte)0xDF;
+
+                Debug.WriteLineIf(((this.WiimoteState.Extension & (byte)ExtensionType.MotionPlus) == 0), "MotionPlus disabled");
         }
 
 		/// <summary>
@@ -514,7 +526,7 @@ namespace WiimoteLib
 
                                 if (PASS_THRU_MODE==PassThruMode.None)
                                 {
-                                    if ((extensionNumber & 0x0000ffffffff) == (long)ExtensionNumber.MotionPlus)
+                                    if (extensionNumber!=0 && (extensionNumber & 0x0000ffffffff) != (long)ExtensionNumber.MotionPlus)
                                     {
                                         DisableMotionPlus();
                                     }
@@ -545,11 +557,11 @@ namespace WiimoteLib
                         
 
                            // mWiimoteState.ExtensionType = ExtensionNumber.None;
-
+                            
 
                         // only fire the extension changed event if we have a real extension (i.e. not a balance board)
-                        //if (WiimoteExtensionChanged != null && mWiimoteState.ExtensionType != ExtensionNumber.BalanceBoard)
-                       //     WiimoteExtensionChanged(this, new WiimoteExtensionChangedEventArgs(mWiimoteState.ExtensionType, mWiimoteState.Extension));
+                        if (WiimoteExtensionChanged != null && mWiimoteState.Extension != (byte)ExtensionType.BalancedBoard)
+                            WiimoteExtensionChanged(this, new WiimoteExtensionChangedEventArgs((ExtensionNumber)extensionNumber, extension));
 
 
                       
@@ -1560,16 +1572,7 @@ namespace WiimoteLib
                             // (value - offest) *gain;
                     //  short yaw   = ((unsigned short)buff[offset+3] & 0xFC)<<6 |
             //               (unsigned short)buff[offset+0];
-                     if (PASS_THRU_MODE != 0x0)
-                     {
-
-
-
-
-
-
-
-                     }else {
+                    
                          mWiimoteState.MotionPlusState.YawFast = ((buff[offset + 3] & 0x02) >> 1) == 0;
                          mWiimoteState.MotionPlusState.PitchFast = ((buff[offset + 3] & 0x01) >> 0) == 0;
                          mWiimoteState.MotionPlusState.RollFast = ((buff[offset + 4] & 0x02) >> 1) == 0;
@@ -1579,7 +1582,7 @@ namespace WiimoteLib
                          mWiimoteState.MotionPlusState.RawValues.Z = (buff[offset + 0] | (buff[offset + 3] & 0xfc) << 6);//YAW
                          mWiimoteState.MotionPlusState.RawValues.Y = (buff[offset + 1] | (buff[offset + 4] & 0xfc) << 6);//ROLL
                          mWiimoteState.MotionPlusState.RawValues.X = (buff[offset + 2] | (buff[offset + 5] & 0xfc) << 6);//PITCH
-                     }
+                     
 
 
                     //mask should be 0xfc(1111 1100) not fa 

@@ -33,8 +33,10 @@ namespace WiimoteTest
             InitializeComponent();
             g = Graphics.FromImage(b);
 
-            //AHRS=new MahonyAHRS(
-            fuser = new KalmanMotionPlusFuser();
+            
+           // fuser = new KalmanMotionPlusFuser();
+           fuser = new MahonyMotionPlusFuser();
+          //  fuser = new MadgwickMotionPlusFuser();
         }
 
 		public WiimoteInfo(Wiimote wm) : this()
@@ -221,7 +223,7 @@ namespace WiimoteTest
 
                     fuser.HandleIMUData(ws.MotionPlusState.Values.Z, ws.MotionPlusState.Values.X, ws.MotionPlusState.Values.Y, ws.AccelState.Values2.X, ws.AccelState.Values2.Y, ws.AccelState.Values2.Z);
 
-
+                    lblMotionPlusRaw.Text = ws.MotionPlusState.RawValues.ToString();
                     lblMotionPlus.Text= fuser.FusedValues.ToString();
 
 					

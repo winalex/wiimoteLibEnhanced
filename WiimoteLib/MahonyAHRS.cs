@@ -268,6 +268,7 @@ namespace WiimoteLib
                 eInt[2] = 0.0f;
             }
 
+
             // Apply feedback terms
             gx = gx + Kp * ex + Ki * eInt[0];
             gy = gy + Kp * ey + Ki * eInt[1];
@@ -365,6 +366,7 @@ namespace WiimoteLib
             if (!stopwatch.IsRunning)
             {
                 //stopwatch.Restart();
+                //stopwatch.Reset();
                 stopwatch.Start();
                 //stopwatch.Re
                 return false;
@@ -403,17 +405,32 @@ namespace WiimoteLib
 
         public MahonyMotionPlusFuser()
         {
-            motionPlusPeriodCounter = new SamplePeriodCounter(1000);
-            mahonyAHRS = new MahonyAHRS(motionPlusPeriodCounter.SamplePeriod);
+            motionPlusPeriodCounter = new SamplePeriodCounter(10);
+            mahonyAHRS = new MahonyAHRS(0.01f);
             Angles = new Euler();
             
         }
 
+
+        /// <summary>
+        /// Handle gyro and accel data by applying calculation if sample period have passed
+        /// </summary>
+        /// <param name="yawDown"></param>
+        /// <param name="pitchLeft"></param>
+        /// <param name="rollLeft"></param>
+        /// <param name="accX"></param>
+        /// <param name="accY"></param>
+        /// <param name="accZ"></param>
         public void HandleIMUData(double yawDown, double pitchLeft, double rollLeft, double accX, double accY, double accZ)
         {
             if (motionPlusPeriodCounter.Update())
             {
-                mahonyAHRS.Update((float)(rollLeft * DEG_TO_RAD), (float)(pitchLeft * DEG_TO_RAD), (float)(yawDown * DEG_TO_RAD), (float)accX, (float)accY, (float)accZ);
+               // mahonyAHRS.Kp = 0;
+              //  mahonyAHRS.SamplePeriod = motionPlusPeriodCounter.SamplePeriod;
+              //  mahonyAHRS.Update((float)(rollLeft * DEG_TO_RAD), (float)(pitchLeft * DEG_TO_RAD), (float)(yawDown * DEG_TO_RAD), (float)accX, (float)accY, (float)accZ);
+
+                mahonyAHRS.Update((float)(rollLeft * DEG_TO_RAD), (float)(pitchLeft * DEG_TO_RAD), (float)(yawDown * DEG_TO_RAD), (float)accY, -(float)accX, (float)accZ);
+              
             }
             
        }
@@ -428,9 +445,13 @@ namespace WiimoteLib
                 calculator.Update(mahonyAHRS.Quaternion[0], mahonyAHRS.Quaternion[1], mahonyAHRS.Quaternion[2],
                                  mahonyAHRS.Quaternion[3]);
 
+                Angles.Yaw = calculator.Yaw * RAD_TO_DEG;
+               // Angles.Yaw = (Angles.Yaw * 0.35 + calculator.Yaw * 0.65) * RAD_TO_DEG;
 
-                return new Euler(calculator.Yaw * RAD_TO_DEG, calculator.Pitch * RAD_TO_DEG,
-                                       calculator.Roll * RAD_TO_DEG);
+
+                Angles.Roll = calculator.Roll * RAD_TO_DEG;
+                Angles.Pitch = calculator.Pitch * RAD_TO_DEG;
+                return Angles;
             }
         }
 

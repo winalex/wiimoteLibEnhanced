@@ -156,6 +156,7 @@
     <Compile Include="Events.cs" />
     <Compile Include="HIDImports.cs" />
     <Compile Include="IFuser.cs" />
+    <Compile Include="MadgwickAHRS.cs" />
     <Compile Include="MahonyAHRS.cs" />
     <Compile Include="Wiimote.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

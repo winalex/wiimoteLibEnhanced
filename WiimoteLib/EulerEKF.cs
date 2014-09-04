@@ -2161,6 +2161,10 @@ namespace WiimoteLib
         /// </summary>
         public void Reset()
         {
+            currentAPitch = 0;
+            currentARoll = 0;
+            currentAYaw = 0;
+
             A = new Matrix(3, 3);
             xp = new Matrix(3, 1);
             xhat = new Matrix(3, 1);
@@ -2524,14 +2528,17 @@ namespace WiimoteLib
         {
             Angles = new Euler();
             gyroFilter = new GyroFilter(200);
-            motionPlusPeriodCounter = new SamplePeriodCounter(1000);
-            kalmanAHRS = new KalmanEulerFilter(motionPlusPeriodCounter.SamplePeriod);
+            motionPlusPeriodCounter = new SamplePeriodCounter(100);
+            kalmanAHRS = new KalmanEulerFilter(0.1f);
         }
 
         public void HandleIMUData(double yawDown, double pitchLeft, double rollLeft, double accX, double accY, double accZ)
         {
             if (motionPlusPeriodCounter.Update())
+            {
+                gyroFilter.removeOffset(ref rollLeft, ref pitchLeft,ref yawDown);
                 kalmanAHRS.Update((float)(rollLeft * DEG_TO_RAD), (float)(pitchLeft * DEG_TO_RAD), (float)(yawDown * DEG_TO_RAD), (float)accX, (float)accY, (float)accZ);
+            }
         }
 
 

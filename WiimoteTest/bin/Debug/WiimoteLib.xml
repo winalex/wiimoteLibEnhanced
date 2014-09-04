@@ -29,7 +29,7 @@
             Whether the extension was inserted or removed
             </summary>
         </member>
-        <member name="M:WiimoteLib.WiimoteExtensionChangedEventArgs.#ctor(WiimoteLib.ExtensionType,System.Boolean)">
+        <member name="M:WiimoteLib.WiimoteExtensionChangedEventArgs.#ctor(WiimoteLib.ExtensionNumber,System.Boolean)">
             <summary>
             Constructor
             </summary>
@@ -220,11 +220,6 @@
         <member name="F:WiimoteLib.WiimoteState.Extension">
             <summary>
             Is an extension controller inserted?
-            </summary>
-        </member>
-        <member name="F:WiimoteLib.WiimoteState.ExtensionType">
-            <summary>
-            Extension controller currently inserted, if any
             </summary>
         </member>
         <member name="F:WiimoteLib.WiimoteState.NunchukState">
@@ -1209,50 +1204,60 @@
         </member>
         <member name="T:WiimoteLib.ExtensionType">
             <summary>
-            The extension plugged into the Wiimote
+            
             </summary>
         </member>
-        <member name="F:WiimoteLib.ExtensionType.None">
+        <member name="T:WiimoteLib.PassThruMode">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="T:WiimoteLib.ExtensionNumber">
+            <summary>
+            The extension number of the currently plugged into the Wiimote
+            </summary>
+        </member>
+        <member name="F:WiimoteLib.ExtensionNumber.None">
             <summary>
             No extension
             </summary>
         </member>
-        <member name="F:WiimoteLib.ExtensionType.Nunchuk">
+        <member name="F:WiimoteLib.ExtensionNumber.Nunchuk">
             <summary>
             Nunchuk extension
             </summary>
         </member>
-        <member name="F:WiimoteLib.ExtensionType.ClassicController">
+        <member name="F:WiimoteLib.ExtensionNumber.ClassicController">
             <summary>
             Classic Controller extension
             </summary>
         </member>
-        <member name="F:WiimoteLib.ExtensionType.Guitar">
+        <member name="F:WiimoteLib.ExtensionNumber.Guitar">
             <summary>
             Guitar controller from Guitar Hero 3/WorldTour
             </summary>
         </member>
-        <member name="F:WiimoteLib.ExtensionType.Drums">
+        <member name="F:WiimoteLib.ExtensionNumber.Drums">
             <summary>
             Drum controller from Guitar Hero: World Tour
             </summary>
         </member>
-        <member name="F:WiimoteLib.ExtensionType.BalanceBoard">
+        <member name="F:WiimoteLib.ExtensionNumber.BalanceBoard">
             <summary>
             Wii Fit Balance Board controller
             </summary>
         </member>
-        <member name="F:WiimoteLib.ExtensionType.TaikoDrum">
+        <member name="F:WiimoteLib.ExtensionNumber.TaikoDrum">
             <summary>
             Taiko "TaTaCon" drum controller
             </summary>
         </member>
-        <member name="F:WiimoteLib.ExtensionType.MotionPlus">
+        <member name="F:WiimoteLib.ExtensionNumber.MotionPlus">
             <summary>
             Wii MotionPlus extension
             </summary>
         </member>
-        <member name="F:WiimoteLib.ExtensionType.ParitallyInserted">
+        <member name="F:WiimoteLib.ExtensionNumber.ParitallyInserted">
             <summary>
             Partially inserted extension.  This is an error condition.
             </summary>
@@ -1417,7 +1422,7 @@
         </member>
         <member name="M:WiimoteLib.MahonyAHRS.#ctor(System.Single)">
             <summary>
-            Initializes a new instance of the <see cref="!:MadgwickAHRS"/> class.
+            Initializes a new instance of the <see cref="T:WiimoteLib.MadgwickAHRS"/> class.
             </summary>
             <param name="samplePeriod">
             Sample period.
@@ -1425,7 +1430,7 @@
         </member>
         <member name="M:WiimoteLib.MahonyAHRS.#ctor(System.Single,System.Single)">
             <summary>
-            Initializes a new instance of the <see cref="!:MadgwickAHRS"/> class.
+            Initializes a new instance of the <see cref="T:WiimoteLib.MadgwickAHRS"/> class.
             </summary>
             <param name="samplePeriod">
             Sample period.
@@ -1436,7 +1441,7 @@
         </member>
         <member name="M:WiimoteLib.MahonyAHRS.#ctor(System.Single,System.Single,System.Single)">
             <summary>
-            Initializes a new instance of the <see cref="!:MadgwickAHRS"/> class.
+            Initializes a new instance of the <see cref="T:WiimoteLib.MadgwickAHRS"/> class.
             </summary>
             <param name="samplePeriod">
             Sample period.
@@ -1530,6 +1535,17 @@
             <summary>
             Gets or sets the integral error.
             </summary>
+        </member>
+        <member name="M:WiimoteLib.MahonyMotionPlusFuser.HandleIMUData(System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)">
+            <summary>
+            Handle gyro and accel data by applying calculation if sample period have passed
+            </summary>
+            <param name="yawDown"></param>
+            <param name="pitchLeft"></param>
+            <param name="rollLeft"></param>
+            <param name="accX"></param>
+            <param name="accY"></param>
+            <param name="accZ"></param>
         </member>
         <member name="T:WiimoteLib.HIDImports">
             <summary>
@@ -1736,23 +1752,6 @@
             <param name="size">Length of buffer</param>
             <param name="data">Data buffer</param>
         </member>
-        <member name="M:WiimoteLib.Wiimote.ResetPositionFilter">
-            <summary>
-            Reset Filter
-            </summary>
-        </member>
-        <member name="M:WiimoteLib.Wiimote.ParamPositionFilter(System.Double,System.Double,System.Double)">
-            <summary>
-            Ser another parameters do EKF filter
-            </summary>
-        </member>
-        <member name="M:WiimoteLib.Wiimote.PositionFilter">
-            <summary>
-            Calculate de wiimote position based on accel, gyros and kalman filter.
-            Roll : +- PI
-            Pitch: +- PI/2
-            </summary>
-        </member>
         <member name="M:WiimoteLib.Wiimote.Dispose">
             <summary>
             Dispose Wiimote
@@ -1854,81 +1853,7 @@
             <param name="info">Serialization info</param>
             <param name="context">Streaming context</param>
         </member>
-        <member name="T:KalmanFilter.EulerEKF">
-            <summary>
-            Euler Extended Kalman Filter (EKF) Library for Wiimote + MotionPlus
-            </summary>
-        </member>
-        <member name="M:KalmanFilter.EulerEKF.#ctor">
-            <summary>
-            Constructor.
-            Q and R are how much you trust on data. High Q and low R trust more on reference data,
-            low Q and high R trust more on gyros.
-            P is initial covariance error. Should be big (~10).
-            Q = 0.01, R=6, P = 10 are good starting values.
-            </summary>
-        </member>
-        <member name="M:KalmanFilter.EulerEKF.Reset">
-            <summary>
-            Reset filter
-            </summary>
-        </member>
-        <member name="M:KalmanFilter.EulerEKF.Predict(System.Double,System.Double,System.Double,System.Double)">
-            <summary>
-            Predict new state based on gyro inputs [rad/s] and last state.
-            Calculate predictec covariance
-            dt is elapsed time since lsat call in seconds.
-            </summary>
-        </member>
-        <member name="M:KalmanFilter.EulerEKF.Estimate(System.Double,System.Double,System.Double)">
-            <summary>
-            Estimate new state based on external reference and prediction.
-            Calculate Estimate covariance
-            </summary>
-        </member>
-        <member name="M:KalmanFilter.EulerEKF.GetState(System.Double@,System.Double@,System.Double@)">
-            <summary>
-            Get state variables roll, pitch and yaw for state matrix.
-            </summary>
-        </member>
-        <member name="P:KalmanFilter.EulerEKF.Qparam">
-            <summary>
-            Kalman filter parameter Q
-            </summary>
-        </member>
-        <member name="P:KalmanFilter.EulerEKF.Rparam">
-            <summary>
-            Kalman filter parameter R
-            </summary>
-        </member>
-        <member name="P:KalmanFilter.EulerEKF.Pparam">
-            <summary>
-            Kalman filter parameter P
-            </summary>
-        </member>
-        <member name="T:KalmanFilter.GyroFilter">
-            <summary>
-            Implementation of Gyros filter
-            </summary>
-        </member>
-        <member name="M:KalmanFilter.GyroFilter.#ctor(System.Int32)">
-            <summary>
-            Constructor for Gyro Filter.
-            n is number of sampless used to average offset value.
-            </summary>
-        </member>
-        <member name="M:KalmanFilter.GyroFilter.Reset">
-            <summary>
-            Reset filter. The next n samples will be used to calculate offset value
-            </summary>
-        </member>
-        <member name="M:KalmanFilter.GyroFilter.removeOffset(System.Double@,System.Double@,System.Double@)">
-            <summary>
-            Calculate mean offset of n samles (using recursive math) and remove if from signal.
-            gx, gy, gz are gyro input to be filtered. 
-            </summary>
-        </member>
-        <member name="T:MatrixLibrary.Matrix">
+        <member name="T:WiimoteLib.Matrix">
             <summary>
             Matrix Library .Net v2.0 By Anas Abidi, 2004.
             
@@ -1939,7 +1864,7 @@
             derived from the matrix class.
             </summary>
         </member>
-        <member name="M:MatrixLibrary.Matrix.#ctor(System.Int32,System.Int32)">
+        <member name="M:WiimoteLib.Matrix.#ctor(System.Int32,System.Int32)">
             <summary>
             Matrix object constructor, constructs an empty
             matrix with dimensions: rows = noRows and cols = noCols.
@@ -1947,14 +1872,14 @@
             <param name="noRows"> no. of rows in this matrix </param>
             <param name="noCols"> no. of columns in this matrix</param>
         </member>
-        <member name="M:MatrixLibrary.Matrix.#ctor(System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.#ctor(System.Double[0:,0:])">
             <summary>
             Matrix object constructor, constructs a matrix from an
             already defined array object.
             </summary>
             <param name="Mat">the array the matrix will contain</param>
         </member>
-        <member name="M:MatrixLibrary.Matrix.OneD_2_TwoD(System.Double[])">
+        <member name="M:WiimoteLib.Matrix.OneD_2_TwoD(System.Double[])">
             <summary>
             Returns the 2D form of a 1D array. i.e. array with
             dimension[n] is returned as an array with dimension [n,1]. 
@@ -1965,7 +1890,7 @@
             </param>
             <returns> the same array but with [n,1] dimension </returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.TwoD_2_OneD(System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.TwoD_2_OneD(System.Double[0:,0:])">
             <summary>
             Returns the 1D form of a 2D array. i.e. array with
             dimension[n,1] is returned as an array with dimension [n]. 
@@ -1976,14 +1901,14 @@
             </param>
             <returns>the same array but with [n] dimension</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Identity(System.Int32)">
+        <member name="M:WiimoteLib.Matrix.Identity(System.Int32)">
             <summary>
             Returns an Identity matrix with dimensions [n,n] in the from of an array.
             </summary>
             <param name="n">the no. of rows or no. cols in the matrix</param>
             <returns>An identity Matrix with dimensions [n,n] in the form of an array</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Add(System.Double[0:,0:],System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.Add(System.Double[0:,0:],System.Double[0:,0:])">
             <summary>
             Returns the summation of two matrices with compatible 
             dimensions.
@@ -1993,7 +1918,7 @@
             <param name="Mat2">Second array in the summation</param>
             <returns>Sum of Mat1 and Mat2 as an array</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Add(MatrixLibrary.Matrix,MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.Add(WiimoteLib.Matrix,WiimoteLib.Matrix)">
             <summary>
             Returns the summation of two matrices with compatible 
             dimensions.
@@ -2003,7 +1928,7 @@
             <param name="Mat2">Second matrix in the summation</param>
             <returns>Sum of Mat1 and Mat2 as a Matrix object</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.op_Addition(MatrixLibrary.Matrix,MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.op_Addition(WiimoteLib.Matrix,WiimoteLib.Matrix)">
             <summary>
             Returns the summation of two matrices with compatible 
             dimensions.
@@ -2013,7 +1938,7 @@
             <param name="Mat2">Second Matrix object in the summation</param>
             <returns>Sum of Mat1 and Mat2 as a Matrix object</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Subtract(System.Double[0:,0:],System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.Subtract(System.Double[0:,0:],System.Double[0:,0:])">
             <summary>
             Returns the difference of two matrices with compatible 
             dimensions.
@@ -2023,7 +1948,7 @@
             <param name="Mat2">Second array in the subtraction</param>
             <returns>Difference of Mat1 and Mat2 as an array</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Subtract(MatrixLibrary.Matrix,MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.Subtract(WiimoteLib.Matrix,WiimoteLib.Matrix)">
             <summary>
             Returns the difference of two matrices with compatible 
             dimensions.
@@ -2033,7 +1958,7 @@
             <param name="Mat2">Second matrix in the subtraction</param>
             <returns>Difference of Mat1 and Mat2 as a Matrix object</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.op_Subtraction(MatrixLibrary.Matrix,MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.op_Subtraction(WiimoteLib.Matrix,WiimoteLib.Matrix)">
             <summary>
             Returns the difference of two matrices with compatible 
             dimensions.
@@ -2043,7 +1968,7 @@
             <param name="Mat2">Second Matrix object in the subtraction</param>
             <returns>Difference of Mat1 and Mat2 as a Matrix object</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Multiply(System.Double[0:,0:],System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.Multiply(System.Double[0:,0:],System.Double[0:,0:])">
             <summary>
             Returns the multiplication of two matrices with compatible 
             dimensions.
@@ -2053,7 +1978,7 @@
             <param name="Mat2">Second array in multiplication</param>
             <returns>Mat1 multiplied by Mat2 as an array</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Multiply(MatrixLibrary.Matrix,MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.Multiply(WiimoteLib.Matrix,WiimoteLib.Matrix)">
             <summary>
             Returns the multiplication of two matrices with compatible 
             dimensions OR the cross-product of two vectors.
@@ -2069,7 +1994,7 @@
             </param>
             <returns>Mat1 multiplied by Mat2 as a Matrix object</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.op_Multiply(MatrixLibrary.Matrix,MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.op_Multiply(WiimoteLib.Matrix,WiimoteLib.Matrix)">
             <summary>
             Returns the multiplication of two matrices with compatible 
             dimensions OR the cross-product of two vectors.
@@ -2085,7 +2010,7 @@
             </param>
             <returns>Mat1 multiplied by Mat2 as a Matrix object</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Det(System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.Det(System.Double[0:,0:])">
             <summary>
             Returns the determinant of a matrix with [n,n] dimension.
             In case of an error the error is raised as an exception. 
@@ -2095,7 +2020,7 @@
             </param>
             <returns>Determinant of the array</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Det(MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.Det(WiimoteLib.Matrix)">
             <summary>
             Returns the determinant of a matrix with [n,n] dimension.
             In case of an error the error is raised as an exception. 
@@ -2105,7 +2030,7 @@
             </param>
             <returns>Determinant of the Matrix object</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Inverse(System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.Inverse(System.Double[0:,0:])">
             <summary>
             Returns the inverse of a matrix with [n,n] dimension 
             and whose determinant is not zero.
@@ -2116,7 +2041,7 @@
             </param>
             <returns>Inverse of the array as an array</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Inverse(MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.Inverse(WiimoteLib.Matrix)">
             <summary>
             Returns the inverse of a matrix with [n,n] dimension 
             and whose determinant is not zero.
@@ -2127,7 +2052,7 @@
             </param>
             <returns>Inverse of the matrix as a Matrix object</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Transpose(System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.Transpose(System.Double[0:,0:])">
             <summary>
             Returns the transpose of a matrix.
             In case of an error the error is raised as an exception. 
@@ -2135,7 +2060,7 @@
             <param name="Mat">Array whose transpose is to be found</param>
             <returns>Transpose of the array as an array</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Transpose(MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.Transpose(WiimoteLib.Matrix)">
             <summary>
             Returns the transpose of a matrix.
             In case of an error the error is raised as an exception. 
@@ -2143,7 +2068,7 @@
             <param name="Mat">Matrix object whose transpose is to be found</param>
             <returns>Transpose of the Matrix object as a Matrix object</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.SVD(System.Double[0:,0:],System.Double[0:,0:]@,System.Double[0:,0:]@,System.Double[0:,0:]@)">
+        <member name="M:WiimoteLib.Matrix.SVD(System.Double[0:,0:],System.Double[0:,0:]@,System.Double[0:,0:]@,System.Double[0:,0:]@)">
             <summary>
             Evaluates the Singular Value Decomposition of a matrix, 
             returns the  matrices S, U and V. Such that a given
@@ -2159,7 +2084,7 @@
             <param name="U_">An array where the U matrix is returned</param>
             <param name="V_">An array where the V matrix is returned</param>
         </member>
-        <member name="M:MatrixLibrary.Matrix.SVD(MatrixLibrary.Matrix,MatrixLibrary.Matrix@,MatrixLibrary.Matrix@,MatrixLibrary.Matrix@)">
+        <member name="M:WiimoteLib.Matrix.SVD(WiimoteLib.Matrix,WiimoteLib.Matrix@,WiimoteLib.Matrix@,WiimoteLib.Matrix@)">
             <summary>
             Evaluates the Singular Value Decomposition of a matrix, 
             returns the  matrices S, U and V. Such that a given
@@ -2175,7 +2100,7 @@
             <param name="U">A Matrix object where the U matrix is returned</param>
             <param name="V">A Matrix object where the V matrix is returned</param>
         </member>
-        <member name="M:MatrixLibrary.Matrix.LU(System.Double[0:,0:],System.Double[0:,0:]@,System.Double[0:,0:]@,System.Double[0:,0:]@)">
+        <member name="M:WiimoteLib.Matrix.LU(System.Double[0:,0:],System.Double[0:,0:]@,System.Double[0:,0:]@,System.Double[0:,0:]@)">
             <summary>
             Returns the LU Decomposition of a matrix. 
             the output is: lower triangular matrix L, upper
@@ -2192,7 +2117,7 @@
             <param name="U">An array where the upper traingular matrix is returned</param>
             <param name="P">An array where the permutation matrix is returned</param>
         </member>
-        <member name="M:MatrixLibrary.Matrix.LU(MatrixLibrary.Matrix,MatrixLibrary.Matrix@,MatrixLibrary.Matrix@,MatrixLibrary.Matrix@)">
+        <member name="M:WiimoteLib.Matrix.LU(WiimoteLib.Matrix,WiimoteLib.Matrix@,WiimoteLib.Matrix@,WiimoteLib.Matrix@)">
             <summary>
             Returns the LU Decomposition of a matrix. 
             the output is: lower triangular matrix L, upper
@@ -2209,7 +2134,7 @@
             <param name="U">A Matrix object where the upper traingular matrix is returned</param>
             <param name="P">A Matrix object where the permutation matrix is returned</param>
         </member>
-        <member name="M:MatrixLibrary.Matrix.SolveLinear(System.Double[0:,0:],System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.SolveLinear(System.Double[0:,0:],System.Double[0:,0:])">
             <summary>
             Solves a set of n linear equations A.X = B, and returns
             X, where A is [n,n] and B is [n,1]. 
@@ -2225,7 +2150,7 @@
             <param name="MatB">The array 'B' on the right side of the equations A.X = B</param>
             <returns>Array 'X' in the system of equations A.X = B</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.SolveLinear(MatrixLibrary.Matrix,MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.SolveLinear(WiimoteLib.Matrix,WiimoteLib.Matrix)">
             <summary>
             Solves a set of n linear equations A.X = B, and returns
             X, where A is [n,n] and B is [n,1]. 
@@ -2241,7 +2166,7 @@
             <param name="MatB">Matrix object 'B' on the right side of the equations A.X = B</param>
             <returns>Matrix object 'X' in the system of equations A.X = B</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Rank(System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.Rank(System.Double[0:,0:])">
             <summary>
             Returns the rank of a matrix.
             In case of an error the error is raised as an exception. 
@@ -2249,7 +2174,7 @@
             <param name="Mat">An array whose rank is to be found</param>
             <returns>The rank of the array</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Rank(MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.Rank(WiimoteLib.Matrix)">
             <summary>
             Returns the rank of a matrix.
             In case of an error the error is raised as an exception. 
@@ -2257,7 +2182,7 @@
             <param name="Mat">a Matrix object whose rank is to be found</param>
             <returns>The rank of the Matrix object</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.PINV(System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.PINV(System.Double[0:,0:])">
             <summary>
             Returns the pseudoinverse of a matrix, such that
             X = PINV(A) produces a matrix 'X' of the same dimensions
@@ -2267,7 +2192,7 @@
             <param name="Mat">An array whose pseudoinverse is to be found</param>
             <returns>The pseudoinverse of the array as an array</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.PINV(MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.PINV(WiimoteLib.Matrix)">
             <summary>
             Returns the pseudoinverse of a matrix, such that
             X = PINV(A) produces a matrix 'X' of the same dimensions
@@ -2277,7 +2202,7 @@
             <param name="Mat">a Matrix object whose pseudoinverse is to be found</param>
             <returns>The pseudoinverse of the Matrix object as a Matrix Object</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Eigen(System.Double[0:,0:],System.Double[0:,0:]@,System.Double[0:,0:]@)">
+        <member name="M:WiimoteLib.Matrix.Eigen(System.Double[0:,0:],System.Double[0:,0:]@,System.Double[0:,0:]@)">
             <summary>
             Returns the Eigenvalues and Eigenvectors of a real symmetric
             matrix, which is of dimensions [n,n]. 
@@ -2293,7 +2218,7 @@
             <param name="d">An array where the eigenvalues are returned</param>
             <param name="v">An array where the eigenvectors are returned</param>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Eigen(MatrixLibrary.Matrix,MatrixLibrary.Matrix@,MatrixLibrary.Matrix@)">
+        <member name="M:WiimoteLib.Matrix.Eigen(WiimoteLib.Matrix,WiimoteLib.Matrix@,WiimoteLib.Matrix@)">
             <summary>
             Returns the Eigenvalues and Eigenvectors of a real symmetric
             matrix, which is of dimensions [n,n]. In case of an error the
@@ -2309,7 +2234,7 @@
             <param name="d">A Matrix object where the eigenvalues are returned</param>
             <param name="v">A Matrix object where the eigenvectors are returned</param>
         </member>
-        <member name="M:MatrixLibrary.Matrix.ScalarMultiply(System.Double,System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.ScalarMultiply(System.Double,System.Double[0:,0:])">
             <summary>
             Returns the multiplication of a matrix or a vector (i.e 
             dimension [3,1]) with a scalar quantity.
@@ -2319,7 +2244,7 @@
             <param name="Mat">Array which is to be multiplied by a scalar</param>
             <returns>The multiplication of the scalar and the array as an array</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.ScalarMultiply(System.Double,MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.ScalarMultiply(System.Double,WiimoteLib.Matrix)">
             <summary>
             Returns the multiplication of a matrix or a vector (i.e 
             dimension [3,1]) with a scalar quantity.
@@ -2329,7 +2254,7 @@
             <param name="Mat">Matrix which is to be multiplied by a scalar</param>
             <returns>The multiplication of the scalar and the array as an array</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.op_Multiply(MatrixLibrary.Matrix,System.Double)">
+        <member name="M:WiimoteLib.Matrix.op_Multiply(WiimoteLib.Matrix,System.Double)">
             <summary>
             Returns the multiplication of a matrix or a vector (i.e 
             dimension [3,1]) with a scalar quantity.
@@ -2342,7 +2267,7 @@
             Matrix object
             </returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.op_Multiply(System.Double,MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.op_Multiply(System.Double,WiimoteLib.Matrix)">
             <summary>
             Returns the multiplication of a matrix or a vector (i.e 
             dimension [3,1]) with a scalar quantity.
@@ -2355,7 +2280,7 @@
             Matrix object
             </returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.ScalarDivide(System.Double,System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.ScalarDivide(System.Double,System.Double[0:,0:])">
             <summary>
             Returns the division of a matrix or a vector (i.e 
             dimension [3,1]) by a scalar quantity.
@@ -2365,7 +2290,7 @@
             <param name="Mat">Array which is to be divided by a scalar</param>
             <returns>The division of the array and the scalar as an array</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.ScalarDivide(System.Double,MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.ScalarDivide(System.Double,WiimoteLib.Matrix)">
             <summary>
             Returns the division of a matrix or a vector (i.e 
             dimension [3,1]) by a scalar quantity.
@@ -2375,7 +2300,7 @@
             <param name="Mat">Matrix which is to be divided by a scalar</param>
             <returns>The division of the array and the scalar as an array</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.op_Division(MatrixLibrary.Matrix,System.Double)">
+        <member name="M:WiimoteLib.Matrix.op_Division(WiimoteLib.Matrix,System.Double)">
             <summary>
             Returns the division of a matrix or a vector (i.e 
             dimension [3,1]) by a scalar quantity.
@@ -2387,7 +2312,7 @@
             The division of the Matrix object and the scalar as a Matrix object
             </returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.CrossProduct(System.Double[],System.Double[])">
+        <member name="M:WiimoteLib.Matrix.CrossProduct(System.Double[],System.Double[])">
             <summary>
             Returns the cross product of two vectors whose
             dimensions should be [3] or [3,1].
@@ -2397,7 +2322,7 @@
             <param name="V2">Second vector array (dimension [3]) in the cross product</param>
             <returns>Cross product of V1 and V2 as an array (dimension [3])</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.CrossProduct(System.Double[0:,0:],System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.CrossProduct(System.Double[0:,0:],System.Double[0:,0:])">
             <summary>
             Returns the cross product of two vectors whose
             dimensions should be [3] or [3x1].
@@ -2407,7 +2332,7 @@
             <param name="V2">Second vector array (dimensions [3,1]) in the cross product</param>
             <returns>Cross product of V1 and V2 as an array (dimension [3,1])</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.CrossProduct(MatrixLibrary.Matrix,MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.CrossProduct(WiimoteLib.Matrix,WiimoteLib.Matrix)">
             <summary>
             Returns the cross product of two vectors whose
             dimensions should be [3] or [3x1].
@@ -2417,7 +2342,7 @@
             <param name="V2">Second Matrix (dimensions [3,1]) in the cross product</param>
             <returns>Cross product of V1 and V2 as a matrix (dimension [3,1])</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.DotProduct(System.Double[],System.Double[])">
+        <member name="M:WiimoteLib.Matrix.DotProduct(System.Double[],System.Double[])">
             <summary>
             Returns the dot product of two vectors whose
             dimensions should be [3] or [3,1].
@@ -2427,7 +2352,7 @@
             <param name="V2">Second vector array (dimension [3]) in the dot product</param>
             <returns>Dot product of V1 and V2</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.DotProduct(System.Double[0:,0:],System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.DotProduct(System.Double[0:,0:],System.Double[0:,0:])">
             <summary>
             Returns the dot product of two vectors whose
             dimensions should be [3] or [3,1].
@@ -2437,7 +2362,7 @@
             <param name="V2">Second vector array (dimension [3,1]) in the dot product</param>
             <returns>Dot product of V1 and V2</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.DotProduct(MatrixLibrary.Matrix,MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.DotProduct(WiimoteLib.Matrix,WiimoteLib.Matrix)">
             <summary>
             Returns the dot product of two vectors whose
             dimensions should be [3] or [3,1].
@@ -2447,7 +2372,7 @@
             <param name="V2">Second Matrix object (dimension [3,1]) in the dot product</param>
             <returns>Dot product of V1 and V2</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.VectorMagnitude(System.Double[])">
+        <member name="M:WiimoteLib.Matrix.VectorMagnitude(System.Double[])">
             <summary>
              Returns the magnitude of a vector whose dimension is [3] or [3,1].
              In case of an error the error is raised as an exception.
@@ -2455,7 +2380,7 @@
             <param name="V">The vector array (dimension [3]) whose magnitude is to be found</param>
             <returns>The magnitude of the vector array</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.VectorMagnitude(System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.VectorMagnitude(System.Double[0:,0:])">
             <summary>
              Returns the magnitude of a vector whose dimension is [3] or [3,1].
              In case of an error the error is raised as an exception.
@@ -2463,7 +2388,7 @@
             <param name="V">The vector array (dimension [3,1]) whose magnitude is to be found</param>
             <returns>The magnitude of the vector array</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.VectorMagnitude(MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.VectorMagnitude(WiimoteLib.Matrix)">
             <summary>
              Returns the magnitude of a vector whose dimension is [3] or [3,1].
              In case of an error the error is raised as an exception.
@@ -2471,7 +2396,7 @@
             <param name="V">Matrix object (dimension [3,1]) whose magnitude is to be found</param>
             <returns>The magnitude of the Matrix object</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.IsEqual(System.Double[0:,0:],System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.IsEqual(System.Double[0:,0:],System.Double[0:,0:])">
             <summary>
             Checks if two Arrays of equal dimensions are equal or not.
             In case of an error the error is raised as an exception.
@@ -2480,7 +2405,7 @@
             <param name="Mat2">Second array in equality check</param>
             <returns>If two matrices are equal or not</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.IsEqual(MatrixLibrary.Matrix,MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.IsEqual(WiimoteLib.Matrix,WiimoteLib.Matrix)">
             <summary>
             Checks if two matrices of equal dimensions are equal or not.
             In case of an error the error is raised as an exception.
@@ -2489,7 +2414,7 @@
             <param name="Mat2">Second Matrix in equality check</param>
             <returns>If two matrices are equal or not</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.op_Equality(MatrixLibrary.Matrix,MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.op_Equality(WiimoteLib.Matrix,WiimoteLib.Matrix)">
             <summary>
             Checks if two matrices of equal dimensions are equal or not.
             In case of an error the error is raised as an exception.
@@ -2498,7 +2423,7 @@
             <param name="Mat2">Second Matrix object in equality check</param>
             <returns>If two matrices are equal or not</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.op_Inequality(MatrixLibrary.Matrix,MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.op_Inequality(WiimoteLib.Matrix,WiimoteLib.Matrix)">
             <summary>
             Checks if two matrices of equal dimensions are not equal.
             In case of an error the error is raised as an exception.
@@ -2507,7 +2432,7 @@
             <param name="Mat2">Second Matrix object in equality check</param>
             <returns>If two matrices are not equal</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.Equals(System.Object)">
+        <member name="M:WiimoteLib.Matrix.Equals(System.Object)">
             <summary>
             Tests whether the specified object is a MatrixLibrary.Matrix
             object and is identical to this MatrixLibrary.Matrix object.
@@ -2515,7 +2440,7 @@
             <param name="obj">The object to compare with the current object</param>
             <returns>This method returns true if obj is the specified Matrix object identical to this Matrix object; otherwise, false.</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.PrintMat(System.Double[0:,0:])">
+        <member name="M:WiimoteLib.Matrix.PrintMat(System.Double[0:,0:])">
             <summary>
             Returns a matrix as a string, so it can be viewed
             in a multi-text textbox or in a richtextBox (preferred).
@@ -2524,7 +2449,7 @@
             <param name="Mat">The array to be viewed</param>
             <returns>The string view of the array</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.PrintMat(MatrixLibrary.Matrix)">
+        <member name="M:WiimoteLib.Matrix.PrintMat(WiimoteLib.Matrix)">
             <summary>
             Returns a matrix as a string, so it can be viewed
             in a multi-text textbox or in a richtextBox (preferred).
@@ -2533,7 +2458,7 @@
             <param name="Mat">The Matrix object to be viewed</param>
             <returns>The string view of the Matrix object</returns>
         </member>
-        <member name="M:MatrixLibrary.Matrix.ToString">
+        <member name="M:WiimoteLib.Matrix.ToString">
             <summary>
             Returns the matrix as a string, so it can be viewed
             in a multi-text textbox or in a richtextBox (preferred).
@@ -2541,29 +2466,241 @@
             </summary>
             <returns>The string view of the Matrix object</returns>
         </member>
-        <member name="P:MatrixLibrary.Matrix.Item(System.Int32,System.Int32)">
+        <member name="P:WiimoteLib.Matrix.Item(System.Int32,System.Int32)">
             <summary>
             Set or get an element from the matrix
             </summary>
         </member>
-        <member name="P:MatrixLibrary.Matrix.NoRows">
+        <member name="P:WiimoteLib.Matrix.NoRows">
             <summary>
             Set or get the no. of rows in the matrix.
             Warning: Setting this property will delete all of
             the elements of the matrix and set them to zero.
             </summary>
         </member>
-        <member name="P:MatrixLibrary.Matrix.NoCols">
+        <member name="P:WiimoteLib.Matrix.NoCols">
             <summary>
             Set or get the no. of columns in the matrix.
             Warning: Setting this property will delete all of
             the elements of the matrix and set them to zero.
             </summary>
         </member>
-        <member name="P:MatrixLibrary.Matrix.toArray">
+        <member name="P:WiimoteLib.Matrix.toArray">
             <summary>
             This property returns the matrix as an array.
             </summary>
+        </member>
+        <member name="T:WiimoteLib.KalmanEulerFilter">
+            <summary>
+            Euler Extended Kalman Filter (EKF) Library for Wiimote + MotionPlus
+            </summary>
+        </member>
+        <member name="M:WiimoteLib.KalmanEulerFilter.#ctor(System.Single)">
+            <summary>
+            Constructor.
+            Q and R are how much you trust on data. High Q and low R trust more on reference data,
+            low Q and high R trust more on gyros.
+            P is initial covariance error. Should be big (~10).
+            Q = 0.01, R=6, P = 10 are good starting values.
+            </summary>
+        </member>
+        <member name="M:WiimoteLib.KalmanEulerFilter.Reset">
+            <summary>
+            Reset filter
+            </summary>
+        </member>
+        <member name="M:WiimoteLib.KalmanEulerFilter.Predict(System.Double,System.Double,System.Double,System.Double)">
+            <summary>
+            Predict new state based on gyro inputs [rad/s] and last state.
+            Calculate predictec covariance
+            dt is elapsed time since lsat call in seconds.
+            </summary>
+        </member>
+        <member name="M:WiimoteLib.KalmanEulerFilter.Estimate(System.Double,System.Double,System.Double)">
+            <summary>
+            Estimate new state based on external reference and prediction.
+            Calculate Estimate covariance
+            </summary>
+        </member>
+        <member name="M:WiimoteLib.KalmanEulerFilter.GetState(System.Double@,System.Double@,System.Double@)">
+            <summary>
+            Get state variables roll, pitch and yaw for state matrix.
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:WiimoteLib.KalmanEulerFilter.Update(System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)" -->
+        <member name="M:WiimoteLib.KalmanEulerFilter.ParamPositionFilter(System.Double,System.Double,System.Double)">
+            <summary>
+            Ser another parameters do EKF filter
+            </summary>
+        </member>
+        <member name="P:WiimoteLib.KalmanEulerFilter.SamplePeriod">
+            <summary>
+            Gets or sets the sample period.
+            </summary>
+        </member>
+        <member name="P:WiimoteLib.KalmanEulerFilter.Qparam">
+            <summary>
+            Kalman filter parameter Q
+            </summary>
+        </member>
+        <member name="P:WiimoteLib.KalmanEulerFilter.Rparam">
+            <summary>
+            Kalman filter parameter R
+            </summary>
+        </member>
+        <member name="P:WiimoteLib.KalmanEulerFilter.Pparam">
+            <summary>
+            Kalman filter parameter P
+            </summary>
+        </member>
+        <member name="T:WiimoteLib.GyroFilter">
+            <summary>
+            Implementation of Gyros filter
+            </summary>
+        </member>
+        <member name="M:WiimoteLib.GyroFilter.#ctor(System.Int32)">
+            <summary>
+            Constructor for Gyro Filter.
+            n is number of sampless used to average offset value.
+            </summary>
+        </member>
+        <member name="M:WiimoteLib.GyroFilter.Reset">
+            <summary>
+            Reset filter. The next n samples will be used to calculate offset value
+            </summary>
+        </member>
+        <member name="M:WiimoteLib.GyroFilter.removeOffset(System.Double@,System.Double@,System.Double@)">
+            <summary>
+            Calculate mean offset of n samles (using recursive math) and remove if from signal.
+            gx, gy, gz are gyro input to be filtered. 
+            </summary>
+        </member>
+        <member name="M:WiimoteLib.KalmanMotionPlusFuser.ResetFuser">
+            <summary>
+            Reset Filter
+            </summary>
+        </member>
+        <member name="T:WiimoteLib.MadgwickAHRS">
+            <summary>
+            MadgwickAHRS class. Implementation of Madgwick's IMU and AHRS algorithms.
+            </summary>
+            <remarks>
+            See: http://www.x-io.co.uk/node/8#open_source_ahrs_and_imu_algorithms
+            </remarks>
+        </member>
+        <member name="M:WiimoteLib.MadgwickAHRS.#ctor(System.Single)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WiimoteLib.MadgwickAHRS"/> class.
+            </summary>
+            <param name="samplePeriod">
+            Sample period.
+            </param>
+        </member>
+        <member name="M:WiimoteLib.MadgwickAHRS.#ctor(System.Single,System.Single)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WiimoteLib.MadgwickAHRS"/> class.
+            </summary>
+            <param name="samplePeriod">
+            Sample period.
+            </param>
+            <param name="beta">
+            Algorithm gain beta.
+            </param>
+        </member>
+        <member name="M:WiimoteLib.MadgwickAHRS.Update(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            Algorithm AHRS update method. Requires only gyroscope and accelerometer data.
+            </summary>
+            <param name="gx">
+            Gyroscope x axis measurement in radians/s.
+            </param>
+            <param name="gy">
+            Gyroscope y axis measurement in radians/s.
+            </param>
+            <param name="gz">
+            Gyroscope z axis measurement in radians/s.
+            </param>
+            <param name="ax">
+            Accelerometer x axis measurement in any calibrated units.
+            </param>
+            <param name="ay">
+            Accelerometer y axis measurement in any calibrated units.
+            </param>
+            <param name="az">
+            Accelerometer z axis measurement in any calibrated units.
+            </param>
+            <param name="mx">
+            Magnetometer x axis measurement in any calibrated units.
+            </param>
+            <param name="my">
+            Magnetometer y axis measurement in any calibrated units.
+            </param>
+            <param name="mz">
+            Magnetometer z axis measurement in any calibrated units.
+            </param>
+            <remarks>
+            Optimised for minimal arithmetic.
+            Total ±: 160
+            Total *: 172
+            Total /: 5
+            Total sqrt: 5
+            </remarks> 
+        </member>
+        <member name="M:WiimoteLib.MadgwickAHRS.Update(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            Algorithm IMU update method. Requires only gyroscope and accelerometer data.
+            </summary>
+            <param name="gx">
+            Gyroscope x axis measurement in radians/s.
+            </param>
+            <param name="gy">
+            Gyroscope y axis measurement in radians/s.
+            </param>
+            <param name="gz">
+            Gyroscope z axis measurement in radians/s.
+            </param>
+            <param name="ax">
+            Accelerometer x axis measurement in any calibrated units.
+            </param>
+            <param name="ay">
+            Accelerometer y axis measurement in any calibrated units.
+            </param>
+            <param name="az">
+            Accelerometer z axis measurement in any calibrated units.
+            </param>
+            <remarks>
+            Optimised for minimal arithmetic.
+            Total ±: 45
+            Total *: 85
+            Total /: 3
+            Total sqrt: 3
+            </remarks>
+        </member>
+        <member name="P:WiimoteLib.MadgwickAHRS.SamplePeriod">
+            <summary>
+            Gets or sets the sample period.
+            </summary>
+        </member>
+        <member name="P:WiimoteLib.MadgwickAHRS.Beta">
+            <summary>
+            Gets or sets the algorithm gain beta.
+            </summary>
+        </member>
+        <member name="P:WiimoteLib.MadgwickAHRS.Quaternion">
+            <summary>
+            Gets or sets the Quaternion output.
+            </summary>
+        </member>
+        <member name="M:WiimoteLib.MadgwickMotionPlusFuser.HandleIMUData(System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)">
+            <summary>
+            Handle gyro and accel data by applying calculation if sample period have passed
+            </summary>
+            <param name="yawDown"></param>
+            <param name="pitchLeft"></param>
+            <param name="rollLeft"></param>
+            <param name="accX"></param>
+            <param name="accY"></param>
+            <param name="accZ"></param>
         </member>
     </members>
 </doc>
