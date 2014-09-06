@@ -35,8 +35,8 @@ namespace WiimoteTest
 
             
            // fuser = new KalmanMotionPlusFuser();
-           fuser = new MahonyMotionPlusFuser();
-          //  fuser = new MadgwickMotionPlusFuser();
+           //fuser = new MahonyMotionPlusFuser();
+           fuser = new MadgwickMotionPlusFuser();
         }
 
 		public WiimoteInfo(Wiimote wm) : this()
@@ -221,11 +221,18 @@ namespace WiimoteTest
 					clbSpeed.SetItemChecked(1, ws.MotionPlusState.PitchFast);
 					clbSpeed.SetItemChecked(2, ws.MotionPlusState.RollFast);
 
-                    fuser.HandleIMUData(ws.MotionPlusState.Values.Z, ws.MotionPlusState.Values.X, ws.MotionPlusState.Values.Y, ws.AccelState.Values2.X, ws.AccelState.Values2.Y, ws.AccelState.Values2.Z);
+                  
+
+                  //  fuser.HandleIMUData(ws.MotionPlusState.Values.Z, ws.MotionPlusState.Values.X, ws.MotionPlusState.Values.Y, ws.AccelState.Values2.X, ws.AccelState.Values2.Y, ws.AccelState.Values2.Z);
+                    fuser.HandleIMUData(ws.MotionPlusState.Values.Z, ws.MotionPlusState.Values.X, ws.MotionPlusState.Values.Y, ws.AccelState.Values.X, ws.AccelState.Values.Y, ws.AccelState.Values.Z);
 
                     lblMotionPlusRaw.Text = ws.MotionPlusState.RawValues.ToString();
-                    lblMotionPlus.Text= fuser.FusedValues.ToString();
 
+                   
+                    lblMotionPlus.Text= ws.MotionPlusState.Values.ToString();
+
+
+                    lblOrientation.Text = fuser.FusedValues.ToString();
 					
 			}
 

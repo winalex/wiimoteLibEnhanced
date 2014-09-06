@@ -1853,6 +1853,128 @@
             <param name="info">Serialization info</param>
             <param name="context">Streaming context</param>
         </member>
+        <member name="T:WiimoteLib.MadgwickAHRS">
+            <summary>
+            MadgwickAHRS class. Implementation of Madgwick's IMU and AHRS algorithms.
+            </summary>
+            <remarks>
+            See: http://www.x-io.co.uk/node/8#open_source_ahrs_and_imu_algorithms
+            </remarks>
+        </member>
+        <member name="M:WiimoteLib.MadgwickAHRS.#ctor(System.Single)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WiimoteLib.MadgwickAHRS"/> class.
+            </summary>
+            <param name="samplePeriod">
+            Sample period.
+            </param>
+        </member>
+        <member name="M:WiimoteLib.MadgwickAHRS.#ctor(System.Single,System.Single)">
+            <summary>
+            Initializes a new instance of the <see cref="T:WiimoteLib.MadgwickAHRS"/> class.
+            </summary>
+            <param name="samplePeriod">
+            Sample period.
+            </param>
+            <param name="beta">
+            Algorithm gain beta.
+            </param>
+        </member>
+        <member name="M:WiimoteLib.MadgwickAHRS.Update(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            Algorithm AHRS update method. Requires only gyroscope and accelerometer data.
+            </summary>
+            <param name="gx">
+            Gyroscope x axis measurement in radians/s.
+            </param>
+            <param name="gy">
+            Gyroscope y axis measurement in radians/s.
+            </param>
+            <param name="gz">
+            Gyroscope z axis measurement in radians/s.
+            </param>
+            <param name="ax">
+            Accelerometer x axis measurement in any calibrated units.
+            </param>
+            <param name="ay">
+            Accelerometer y axis measurement in any calibrated units.
+            </param>
+            <param name="az">
+            Accelerometer z axis measurement in any calibrated units.
+            </param>
+            <param name="mx">
+            Magnetometer x axis measurement in any calibrated units.
+            </param>
+            <param name="my">
+            Magnetometer y axis measurement in any calibrated units.
+            </param>
+            <param name="mz">
+            Magnetometer z axis measurement in any calibrated units.
+            </param>
+            <remarks>
+            Optimised for minimal arithmetic.
+            Total ±: 160
+            Total *: 172
+            Total /: 5
+            Total sqrt: 5
+            </remarks> 
+        </member>
+        <member name="M:WiimoteLib.MadgwickAHRS.Update(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            Algorithm IMU update method. Requires only gyroscope and accelerometer data.
+            </summary>
+            <param name="gx">
+            Gyroscope x axis measurement in radians/s.
+            </param>
+            <param name="gy">
+            Gyroscope y axis measurement in radians/s.
+            </param>
+            <param name="gz">
+            Gyroscope z axis measurement in radians/s.
+            </param>
+            <param name="ax">
+            Accelerometer x axis measurement in any calibrated units.
+            </param>
+            <param name="ay">
+            Accelerometer y axis measurement in any calibrated units.
+            </param>
+            <param name="az">
+            Accelerometer z axis measurement in any calibrated units.
+            </param>
+            <remarks>
+            Optimised for minimal arithmetic.
+            Total ±: 45
+            Total *: 85
+            Total /: 3
+            Total sqrt: 3
+            </remarks>
+        </member>
+        <member name="P:WiimoteLib.MadgwickAHRS.SamplePeriod">
+            <summary>
+            Gets or sets the sample period.
+            </summary>
+        </member>
+        <member name="P:WiimoteLib.MadgwickAHRS.Beta">
+            <summary>
+            Gets or sets the algorithm gain beta.
+            </summary>
+        </member>
+        <member name="P:WiimoteLib.MadgwickAHRS.Quaternion">
+            <summary>
+            Gets or sets the Quaternion output.
+            </summary>
+        </member>
+        <member name="M:WiimoteLib.MadgwickMotionPlusFuser.HandleIMUData(System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)">
+            <summary>
+            Handle gyro and accel data by applying calculation if sample period have passed
+            </summary>
+            <param name="yawDown"></param>
+            <param name="pitchLeft"></param>
+            <param name="rollLeft"></param>
+            <param name="accX"></param>
+            <param name="accY"></param>
+            <param name="accZ"></param>
+        </member>
         <member name="T:WiimoteLib.Matrix">
             <summary>
             Matrix Library .Net v2.0 By Anas Abidi, 2004.
@@ -2569,7 +2691,7 @@
             Reset filter. The next n samples will be used to calculate offset value
             </summary>
         </member>
-        <member name="M:WiimoteLib.GyroFilter.removeOffset(System.Double@,System.Double@,System.Double@)">
+        <member name="M:WiimoteLib.GyroFilter.removeOffset(System.Single@,System.Single@,System.Single@)">
             <summary>
             Calculate mean offset of n samles (using recursive math) and remove if from signal.
             gx, gy, gz are gyro input to be filtered. 
@@ -2579,128 +2701,6 @@
             <summary>
             Reset Filter
             </summary>
-        </member>
-        <member name="T:WiimoteLib.MadgwickAHRS">
-            <summary>
-            MadgwickAHRS class. Implementation of Madgwick's IMU and AHRS algorithms.
-            </summary>
-            <remarks>
-            See: http://www.x-io.co.uk/node/8#open_source_ahrs_and_imu_algorithms
-            </remarks>
-        </member>
-        <member name="M:WiimoteLib.MadgwickAHRS.#ctor(System.Single)">
-            <summary>
-            Initializes a new instance of the <see cref="T:WiimoteLib.MadgwickAHRS"/> class.
-            </summary>
-            <param name="samplePeriod">
-            Sample period.
-            </param>
-        </member>
-        <member name="M:WiimoteLib.MadgwickAHRS.#ctor(System.Single,System.Single)">
-            <summary>
-            Initializes a new instance of the <see cref="T:WiimoteLib.MadgwickAHRS"/> class.
-            </summary>
-            <param name="samplePeriod">
-            Sample period.
-            </param>
-            <param name="beta">
-            Algorithm gain beta.
-            </param>
-        </member>
-        <member name="M:WiimoteLib.MadgwickAHRS.Update(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
-            <summary>
-            Algorithm AHRS update method. Requires only gyroscope and accelerometer data.
-            </summary>
-            <param name="gx">
-            Gyroscope x axis measurement in radians/s.
-            </param>
-            <param name="gy">
-            Gyroscope y axis measurement in radians/s.
-            </param>
-            <param name="gz">
-            Gyroscope z axis measurement in radians/s.
-            </param>
-            <param name="ax">
-            Accelerometer x axis measurement in any calibrated units.
-            </param>
-            <param name="ay">
-            Accelerometer y axis measurement in any calibrated units.
-            </param>
-            <param name="az">
-            Accelerometer z axis measurement in any calibrated units.
-            </param>
-            <param name="mx">
-            Magnetometer x axis measurement in any calibrated units.
-            </param>
-            <param name="my">
-            Magnetometer y axis measurement in any calibrated units.
-            </param>
-            <param name="mz">
-            Magnetometer z axis measurement in any calibrated units.
-            </param>
-            <remarks>
-            Optimised for minimal arithmetic.
-            Total ±: 160
-            Total *: 172
-            Total /: 5
-            Total sqrt: 5
-            </remarks> 
-        </member>
-        <member name="M:WiimoteLib.MadgwickAHRS.Update(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
-            <summary>
-            Algorithm IMU update method. Requires only gyroscope and accelerometer data.
-            </summary>
-            <param name="gx">
-            Gyroscope x axis measurement in radians/s.
-            </param>
-            <param name="gy">
-            Gyroscope y axis measurement in radians/s.
-            </param>
-            <param name="gz">
-            Gyroscope z axis measurement in radians/s.
-            </param>
-            <param name="ax">
-            Accelerometer x axis measurement in any calibrated units.
-            </param>
-            <param name="ay">
-            Accelerometer y axis measurement in any calibrated units.
-            </param>
-            <param name="az">
-            Accelerometer z axis measurement in any calibrated units.
-            </param>
-            <remarks>
-            Optimised for minimal arithmetic.
-            Total ±: 45
-            Total *: 85
-            Total /: 3
-            Total sqrt: 3
-            </remarks>
-        </member>
-        <member name="P:WiimoteLib.MadgwickAHRS.SamplePeriod">
-            <summary>
-            Gets or sets the sample period.
-            </summary>
-        </member>
-        <member name="P:WiimoteLib.MadgwickAHRS.Beta">
-            <summary>
-            Gets or sets the algorithm gain beta.
-            </summary>
-        </member>
-        <member name="P:WiimoteLib.MadgwickAHRS.Quaternion">
-            <summary>
-            Gets or sets the Quaternion output.
-            </summary>
-        </member>
-        <member name="M:WiimoteLib.MadgwickMotionPlusFuser.HandleIMUData(System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)">
-            <summary>
-            Handle gyro and accel data by applying calculation if sample period have passed
-            </summary>
-            <param name="yawDown"></param>
-            <param name="pitchLeft"></param>
-            <param name="rollLeft"></param>
-            <param name="accX"></param>
-            <param name="accY"></param>
-            <param name="accZ"></param>
         </member>
     </members>
 </doc>

@@ -95,6 +95,14 @@ namespace WiimoteLib
 		[DataMember]
 		public float X, Y, Z;
 
+
+        public Point3F(float x = 0, float y = 0, float z = 0)
+        {
+            this.X = x;
+            this.Y = y;
+            this.Z = z;
+        }
+
 		/// <summary>
 		/// Convert to human-readable string
 		/// </summary>
@@ -158,7 +166,7 @@ namespace WiimoteLib
         /// <returns>A string that represents the point</returns>
         public override string ToString()
         {
-            return string.Format("{{Roll={0:0.00}, Pitch={1:0.00}, Yaw={2:0.00}}}", Roll, Pitch, Yaw);
+            return string.Format("{{Pitch={0:0.00}, Roll={1:0.00}, Yaw={2:0.00}}}", Pitch, Roll, Yaw);
         }
 
     }

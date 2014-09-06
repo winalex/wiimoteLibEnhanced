@@ -2467,7 +2467,7 @@ namespace WiimoteLib
     {
         int n_samples;
         int k;
-        double offset_x, offset_y, offset_z;
+        float offset_x, offset_y, offset_z;
 
         /// <summary>
         /// Constructor for Gyro Filter.
@@ -2494,11 +2494,11 @@ namespace WiimoteLib
         /// Calculate mean offset of n samles (using recursive math) and remove if from signal.
         /// gx, gy, gz are gyro input to be filtered. 
         /// </summary>
-        public void removeOffset(ref double gx, ref double gy, ref double gz)
+        public void removeOffset(ref float gx, ref float gy, ref float gz)
         {
             if (k <= n_samples)
             {
-                double alpha = (k - 1) / k;
+                float alpha = (k - 1) / k;
                 offset_x = alpha * offset_x + (1 - alpha) * gx;
                 offset_y = alpha * offset_y + (1 - alpha) * gy;
                 offset_z = alpha * offset_z + (1 - alpha) * gz;
@@ -2536,7 +2536,7 @@ namespace WiimoteLib
         {
             if (motionPlusPeriodCounter.Update())
             {
-                gyroFilter.removeOffset(ref rollLeft, ref pitchLeft,ref yawDown);
+             //   gyroFilter.removeOffset(ref (float)rollLeft, ref (float)pitchLeft,ref (float)yawDown);
                 kalmanAHRS.Update((float)(rollLeft * DEG_TO_RAD), (float)(pitchLeft * DEG_TO_RAD), (float)(yawDown * DEG_TO_RAD), (float)accX, (float)accY, (float)accZ);
             }
         }

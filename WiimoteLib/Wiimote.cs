@@ -15,6 +15,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using Microsoft.Win32.SafeHandles;
 using System.Threading;
+using System.Collections.Generic;
 
 namespace WiimoteLib
 {
@@ -39,6 +40,9 @@ namespace WiimoteLib
 		private const int VID = 0x057e;
 		private const int PID = 0x0306;
 
+
+     
+      
       
         private const int PID_MOTION_PLUS_INSIDE = 0x0330;
 
@@ -132,19 +136,50 @@ namespace WiimoteLib
         protected PassThruMode PASS_THRU_MODE = PassThruMode.None;
 
 
-        
-       
+        public  Point3F mMaxNoise;
+       private  List<Point3F> mNoise;
+        private  Point3F mBias;
+        private  Point3F mMinNoise;
+
+        private  Stopwatch mCalibrationStopWatch;
+        private Point3F mPrevAngleRates;
+        private bool mMotionPlusCalibrated;
+
+        // New calibration
+	    // Use of mNoise vector seems to accumulate error
+	    // TODO: find out why, fix, and use mNoise instead
+	    int numCalibrationReadings;
+	    double pitchSum = 0;
+	    double yawSum = 0;
+	    double rollSum = 0;
+
+        private const double NOISE_FILTER =1.5;
+        private const double CALIB_TIME =5000;//ms
+        private const double YAW_ZERO_ZONE= 0.1;// Tolerance level when finding yaw calibration dot in sphere (%)
+        private const double YAW_ZERO_ANGLE =1.0;	// Tolerance angle when calibrating yaw
+
+        private  double mCalibrationTimeout;
+
+        private Point3F mNoiseLevel;
+        private Point3F mNoiseThreshold;
+
+        private GyroFilter gyroFilter = new GyroFilter(200);
+
 
 		/// <summary>
 		/// Default constructor
 		/// </summary>
 		public Wiimote()
 		{
+
+           mNoise = new List<Point3F>();
+           
 		}
 
-		internal Wiimote(string devicePath)
+		internal Wiimote(string devicePath):this()
 		{
 			mDevicePath = devicePath;
+            
 		}
 
 		/// <summary>
@@ -749,6 +784,9 @@ namespace WiimoteLib
                     else
                          mWiimoteState.Extension |= (byte)ExtensionType.MotionPlus;
 
+
+                  
+
 					// someday...
                     ////New mapping. Yaw, Pitch and Roll 
                     ////Yaw = Z axis
@@ -1004,9 +1042,32 @@ namespace WiimoteLib
             double zSquared = mWiimoteState.AccelState.Values.Z * mWiimoteState.AccelState.Values.Z;
 
 
-            mWiimoteState.AccelState.Angles.Roll = (float)(Math.Atan2(mWiimoteState.AccelState.Values.X, Math.Sqrt(ySquared + zSquared)) * RAD_TO_DEG);
-            mWiimoteState.AccelState.Angles.Pitch = (float)(Math.Atan2(-mWiimoteState.AccelState.Values.Y, Math.Sqrt(xSquared + zSquared)) * RAD_TO_DEG);
-            mWiimoteState.AccelState.Angles.Yaw = (float)(Math.Atan2(Math.Sqrt(xSquared + ySquared), mWiimoteState.AccelState.Values.Z) * RAD_TO_DEG);
+            double inv_len = 1 / Math.Sqrt(xSquared+ySquared+zSquared);
+            double x = mWiimoteState.AccelState.Values.X * inv_len;
+            double y = mWiimoteState.AccelState.Values.Y * inv_len;
+            double z = mWiimoteState.AccelState.Values.Z * inv_len;
+
+
+            //float pitch = -asin(y) * 57.2957795f;
+            ////		float roll  =  asin(x)    * 57.2957795f;
+            //float roll = atan2(x, z) * 57.2957795f; 
+            
+            
+            mWiimoteState.AccelState.Angles.Roll = (float)(Math.Atan2(x, z) * RAD_TO_DEG);
+            mWiimoteState.AccelState.Angles.Pitch = -(float)(Math.Asin(y) * RAD_TO_DEG);
+
+            if (z < 0)
+            {
+                mWiimoteState.AccelState.Angles.Pitch = (y < 0) ? 180 - mWiimoteState.AccelState.Angles.Pitch : -180 - mWiimoteState.AccelState.Angles.Pitch;
+                mWiimoteState.AccelState.Angles.Roll = (x < 0) ? -180 - mWiimoteState.AccelState.Angles.Roll : 180 - mWiimoteState.AccelState.Angles.Roll;
+            }
+
+           
+           
+
+            //mWiimoteState.AccelState.Angles.Roll = (float)(Math.Atan2(mWiimoteState.AccelState.Values.X, Math.Sqrt(ySquared + zSquared)) * RAD_TO_DEG);
+            //mWiimoteState.AccelState.Angles.Pitch = (float)(Math.Atan2(-mWiimoteState.AccelState.Values.Y, Math.Sqrt(xSquared + zSquared)) * RAD_TO_DEG);
+            //mWiimoteState.AccelState.Angles.Yaw = (float)(Math.Atan2(Math.Sqrt(xSquared + ySquared), mWiimoteState.AccelState.Values.Z) * RAD_TO_DEG);
 
 
         }
@@ -1556,9 +1617,9 @@ namespace WiimoteLib
                   //  const double fastModeFactor = 2000.0 / 440.0; //According to wiibrew
                     const float fastModeFactor =5; //20f / 4f; //According to wiic
                       Point3 unitsAtZeroDeg=new Point3();
-                     unitsAtZeroDeg.Y=8192;//.0;
-                    unitsAtZeroDeg.X=8220;//.0;
-                    unitsAtZeroDeg.Z=8233;//.0;
+                      unitsAtZeroDeg.Y = 8192;// 8323;// 8192;//.0;
+                      unitsAtZeroDeg.X = 8192;//8173;//8220;//.0;
+                      unitsAtZeroDeg.Z = 8192;// 8846;// 8233;//.0;
                      const float gain =0.05f;// 1f / 20f;//
 
                     //fast
@@ -1567,8 +1628,8 @@ namespace WiimoteLib
                     //slow
                      // (N-8192)/16384 * 3.0V * (1 deg/s)/.002V * (Pi radians)/(180 deg)
 
-                     const float slowFactor =   500/8192f;//deg/unit
-                     const float fastFactor = 2000/8192f ;//deg/unit
+                     const float slowFactor = 500 / 8192f;//deg/unit  0.05f;//   500/8192f;//deg/unit
+                     const float fastFactor = 2000 / 8192f;//deg/unit 0.25f;// 2000/8192f ;//deg/unit
                             // (value - offest) *gain;
                     //  short yaw   = ((unsigned short)buff[offset+3] & 0xFC)<<6 |
             //               (unsigned short)buff[offset+0];
@@ -1578,12 +1639,29 @@ namespace WiimoteLib
                          mWiimoteState.MotionPlusState.RollFast = ((buff[offset + 4] & 0x02) >> 1) == 0;
 
 
+                         //// (may not be optimal)
+                         //float pitch = -asin(y) * 57.2957795f;
+                         ////		float roll  =  asin(x)    * 57.2957795f;
+                         //float roll = atan2(x, z) * 57.2957795f;
+
+                         //short yaw   = ((unsigned short)buff[offset+3] & 0xFC)<<6 |
+                         //               (unsigned short)buff[offset+0];
+                         //short pitch = ((unsigned short)buff[offset+5] & 0xFC)<<6 |
+                         //               (unsigned short)buff[offset+2];
+                         //short roll  = ((unsigned short)buff[offset+4] & 0xFC)<<6 |
+                         //               (unsigned short)buff[offset+1];
+
+                         mPrevAngleRates.X = mWiimoteState.MotionPlusState.RawValues.X;
+                         mPrevAngleRates.Y = mWiimoteState.MotionPlusState.RawValues.Y;
+                         mPrevAngleRates.Z = mWiimoteState.MotionPlusState.RawValues.Z;
 
                          mWiimoteState.MotionPlusState.RawValues.Z = (buff[offset + 0] | (buff[offset + 3] & 0xfc) << 6);//YAW
                          mWiimoteState.MotionPlusState.RawValues.Y = (buff[offset + 1] | (buff[offset + 4] & 0xfc) << 6);//ROLL
                          mWiimoteState.MotionPlusState.RawValues.X = (buff[offset + 2] | (buff[offset + 5] & 0xfc) << 6);//PITCH
                      
 
+                    
+                    
 
                     //mask should be 0xfc(1111 1100) not fa 
                    // mWiimoteState.MotionPlusState.RawValues.X = (buff[offset + 0] | (buff[offset + 3] & 0xfa) << 6);
@@ -1591,11 +1669,56 @@ namespace WiimoteLib
                   //  mWiimoteState.MotionPlusState.RawValues.Z = (buff[offset + 2] | (buff[offset + 5] & 0xfa) << 6);
 
 
+                         if (!IsMotionPlusCalibrating())
+                         {
+                             if (!IsMotionPlusCalibrated())
+                             {
+                                 InitCalibration(mWiimoteState.MotionPlusState.RawValues.X, mWiimoteState.MotionPlusState.RawValues.Y, mWiimoteState.MotionPlusState.RawValues.Z);
+                             }
+                         }
+                         else
+                         {
+
+                             UpdateCalibration(mCalibrationStopWatch.ElapsedMilliseconds, mWiimoteState.MotionPlusState.RawValues.X, mWiimoteState.MotionPlusState.RawValues.Y, mWiimoteState.MotionPlusState.RawValues.Z);
+                             return;
+                         }
+
+
+                         unitsAtZeroDeg.X = (int)mBias.X;
+                         unitsAtZeroDeg.Y = (int)mBias.Y;
+                         unitsAtZeroDeg.Z = (int)mBias.Z;
+
+                         float diff = mWiimoteState.MotionPlusState.RawValues.X - mPrevAngleRates.X;
+                         
+                     //if(diff>0 && diff<mNoise.
+                         
+
+                      
+
 
                     //alex winx deg/s
                     mWiimoteState.MotionPlusState.Values.X = mWiimoteState.MotionPlusState.PitchFast ? (mWiimoteState.MotionPlusState.RawValues.X - unitsAtZeroDeg.X) * fastFactor : (mWiimoteState.MotionPlusState.RawValues.X - unitsAtZeroDeg.X) * slowFactor;
                     mWiimoteState.MotionPlusState.Values.Y = mWiimoteState.MotionPlusState.RollFast ? (mWiimoteState.MotionPlusState.RawValues.Y - unitsAtZeroDeg.Y) * fastFactor : (mWiimoteState.MotionPlusState.RawValues.Y - unitsAtZeroDeg.Y) * slowFactor;
                     mWiimoteState.MotionPlusState.Values.Z = mWiimoteState.MotionPlusState.YawFast ? (mWiimoteState.MotionPlusState.RawValues.Z - unitsAtZeroDeg.Z) * fastFactor : (mWiimoteState.MotionPlusState.RawValues.Z - unitsAtZeroDeg.Z) * slowFactor;
+
+                     
+                     //if(!IsMotionPlusCalibrating() ){
+                     //    if(!IsMotionPlusCalibrated())
+                     //     InitCalibration(mWiimoteState.MotionPlusState.Values);
+                     //}else {
+
+                     //     UpdateCalibration(mCalibrationStopWatch.ElapsedMilliseconds,mWiimoteState.MotionPlusState.Values);
+                     //    return;
+                     //}
+
+
+                      //mWiimoteState.MotionPlusState.Values.X -= mBias.X;
+                      //mWiimoteState.MotionPlusState.Values.Y -= mBias.Y;
+                      //mWiimoteState.MotionPlusState.Values.Z -= mBias.Z;
+
+
+
+                    //  gyroFilter.removeOffset(ref mWiimoteState.MotionPlusState.Values.X, ref mWiimoteState.MotionPlusState.Values.Y, ref mWiimoteState.MotionPlusState.Values.Z);
 
 
                     //alex winx deg/s
@@ -2089,7 +2212,187 @@ namespace WiimoteLib
 
        
 
-      
+    #region Calibration
+	void InitCalibration(float x,float y,float z)
+	{
+		mCalibrationTimeout = CALIB_TIME;
+
+        numCalibrationReadings = 0;
+        pitchSum = 0;
+        yawSum = 0;
+        rollSum = 0;
+
+        mMaxNoise =new Point3F();
+        mBias =new Point3F();
+        mMinNoise=new Point3F();
+
+        if(mCalibrationStopWatch==null)
+        mCalibrationStopWatch=new Stopwatch();
+
+        mCalibrationStopWatch.Reset();
+        mCalibrationStopWatch.Start();
+
+        mMaxNoise.X=mBias.X=mMinNoise.X=x;
+        mMaxNoise.Y=mBias.Y=mMinNoise.Y=y;
+        mMaxNoise.Z=mBias.Z=mMinNoise.Z=z;
+
+
+        //mNoiseLevel=new Point3F();
+        //mNoiseThreshold=new Point3F();
+        //mPrevAngleRates=new Point3F();
+        //mAngleRates=new Point3F();
+
+        //mMaxNoise = mMinNoise = mBias = vector3f(new_state.MotionPlus.Speed.Yaw, 
+        //    new_state.MotionPlus.Speed.Pitch, new_state.MotionPlus.Speed.Roll);
+        //mNoiseLevel = mNoiseThreshold = mPrevAngleRates = mAngleRates = vector3f(0,0,0);
+
+
+		mNoise.Clear();
+		
+	}
+
+    bool IsMotionPlusCalibrated()
+	{
+		return mMotionPlusCalibrated;
+	}
+
+	bool IsMotionPlusCalibrating()
+	{
+		return mCalibrationTimeout > 0;
+	}
+
+	// calculate the bias and std of angulr speeds
+	// set mBias and mNoiseLevel
+	void calculateCalibration()
+	{
+		int n = mNoise.Count;
+		Point3F sum =  new Point3F();//vector3f(0,0,0);
+        Point3F currentNoise;
+
+		for (int i=0; i<n; i++) {
+			//sum += mNoise.at(i);
+            currentNoise = mNoise[i];
+            sum.X += currentNoise.X;
+            sum.Y += currentNoise.Y;
+            sum.Z += currentNoise.Z;
+               
+		}
+
+
+        
+
+		mBias.X =(float) pitchSum/numCalibrationReadings;
+		mBias.Y =(float)rollSum /numCalibrationReadings;
+		mBias.Z = (float)yawSum/numCalibrationReadings;
+		//mBias = sum/n;
+
+		sum = new Point3F();//vector3f(0,0,0);
+        float diff;
+		for (int i=0; i<n; i++){
+            //Point3F diff = mNoise.at(i) - mBias;
+            //sum += diff % diff;
+            currentNoise=mNoise[i];
+
+            diff=(currentNoise.X-mBias.X);
+            sum.X += diff % diff;
+
+            diff = (currentNoise.Y - mBias.Y);
+            sum.Y += diff % diff;
+
+            diff = (currentNoise.Z - mBias.Z);
+            sum.Z += diff % diff;
+		}
+
+		sum.X = sum.X / n;
+        sum.Y = sum.Y / n;
+        sum.Z = sum.Z / n;
+
+        //mNoiseLevel = vector3f(sqrt(sum.x), sqrt(sum.y), sqrt(sum.z));
+        //mNoiseThreshold = mNoiseLevel*3;
+
+        mNoiseLevel = new Point3F((float)Math.Sqrt(sum.X),(float) Math.Sqrt(sum.Y),(float) Math.Sqrt(sum.Z));
+        mNoiseThreshold = new Point3F(mNoiseLevel.X*3,mNoiseLevel.Y * 3,mNoiseLevel.Z * 3);
+		
+    
+
+       
+	}
+
+
+    // calculate the avg and std of the bias in yaw, pitch, and roll
+	//void UpdateCalibration(double dt, const wiimote_state new_state)
+    void UpdateCalibration(double dt, float x,float y,float z)
+    {
+        //vector3f rates(new_state.MotionPlus.Speed.Yaw, new_state.MotionPlus.Speed.Pitch, new_state.MotionPlus.Speed.Roll);	
+        Point3F rates = new Point3F(x, y, z);
+
+        UpdateCalibration(dt, rates);
+    }
+
+	// calculate the avg and std of the bias in yaw, pitch, and roll
+	//void UpdateCalibration(double dt, const wiimote_state new_state)
+    void UpdateCalibration(double dt, Point3F values)
+    {
+
+
+        mMaxNoise.X = Math.Max(mMaxNoise.X, values.X);
+        mMaxNoise.Y = Math.Max(mMaxNoise.Y, values.Y);
+        mMaxNoise.Z = Math.Max(mMaxNoise.Z, values.Z);
+        mMinNoise.X = Math.Min(mMinNoise.X, values.X);
+        mMinNoise.Y = Math.Min(mMinNoise.Y, values.Y);
+        mMinNoise.Z = Math.Min(mMinNoise.Z, values.Z);
+
+        // If the wiimote is moving we need to recalibrate
+        //if (((vector3f)(rates - ((mMaxNoise + mMinNoise) * 0.5))).length() > NOISE_FILTER) {
+        //    InitCalibration(new_state);
+        //    return;
+
+         // If the wiimote is moving we need to recalibrate
+        //double x = values.X - ((mMaxNoise.X + mMinNoise.X) * 0.5);
+        //double y = values.Y - ((mMaxNoise.Y + mMinNoise.Y) * 0.5);
+        //double z = values.Z - ((mMaxNoise.Z + mMinNoise.Z) * 0.5);
+
+        //if (Math.Sqrt(x * x + y * y + z * z) > NOISE_FILTER)
+        //{
+
+        //    InitCalibration(values.X,values.Y,values.Z);
+        //    return;
+        //}
+
+
+            // Store the "reading" in mNoise
+            //mNoise.push_back(rates);
+        mNoise.Add(values);
+
+
+
+
+
+            mCalibrationTimeout -= dt;
+
+            if (mCalibrationTimeout <= 0)
+            {
+                mMotionPlusCalibrated = true;
+                mCalibrationStopWatch.Stop();
+
+                calculateCalibration();
+
+
+            }
+            else
+            {
+
+
+                pitchSum += values.X;
+                yawSum += values.Z;
+                rollSum += values.Y;
+
+                numCalibrationReadings++;
+            }
+
+        }
+    
+#endregion Calibration
 
 
  

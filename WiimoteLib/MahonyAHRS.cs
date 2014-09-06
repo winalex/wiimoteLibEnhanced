@@ -332,6 +332,11 @@ namespace WiimoteLib
             Pitch = Math.Asin(-m13);
             Yaw = Math.Atan2(m12, m11);
 
+
+            //float pitch = -asin(y) * 57.2957795f;
+           
+            //float roll = atan2(x, z) * 57.2957795f;
+
             if (Double.IsNaN(Roll))
                 Roll = 0d;
             if (Double.IsNaN(Pitch))
@@ -363,10 +368,12 @@ namespace WiimoteLib
 
         public bool Update()
         {
+           // Debug.WriteLine("Updata at:" + stopwatch.ElapsedMilliseconds);
+
             if (!stopwatch.IsRunning)
             {
                 //stopwatch.Restart();
-                //stopwatch.Reset();
+               // stopwatch.Reset();
                 stopwatch.Start();
                 //stopwatch.Re
                 return false;
@@ -376,6 +383,7 @@ namespace WiimoteLib
 
             if (stopwatch.ElapsedMilliseconds > _period)
             {
+              //  Debug.WriteLine("Period at:" + stopwatch.ElapsedMilliseconds);
                 stopwatch.Stop();
                 SamplePeriod = 1 / (float)(samples / stopwatch.Elapsed.TotalSeconds);
                 return true;
@@ -426,10 +434,11 @@ namespace WiimoteLib
             if (motionPlusPeriodCounter.Update())
             {
                // mahonyAHRS.Kp = 0;
-              //  mahonyAHRS.SamplePeriod = motionPlusPeriodCounter.SamplePeriod;
+                mahonyAHRS.SamplePeriod = motionPlusPeriodCounter.SamplePeriod;
               //  mahonyAHRS.Update((float)(rollLeft * DEG_TO_RAD), (float)(pitchLeft * DEG_TO_RAD), (float)(yawDown * DEG_TO_RAD), (float)accX, (float)accY, (float)accZ);
 
-                mahonyAHRS.Update((float)(rollLeft * DEG_TO_RAD), (float)(pitchLeft * DEG_TO_RAD), (float)(yawDown * DEG_TO_RAD), (float)accY, -(float)accX, (float)accZ);
+              //  mahonyAHRS.Update((float)(pitchLeft * DEG_TO_RAD), (float)(rollLeft * DEG_TO_RAD), (float)(yawDown * DEG_TO_RAD), (float)accX, (float)accY, (float)accZ);
+                mahonyAHRS.Update((float)(pitchLeft * DEG_TO_RAD), (float)(rollLeft * DEG_TO_RAD), (float)(yawDown * DEG_TO_RAD), (float)accX, (float)accY, (float)accZ);
               
             }
             
