@@ -13,6 +13,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Diagnostics;
 
 
 namespace WiimoteLib
@@ -2490,6 +2491,26 @@ namespace WiimoteLib
             offset_z = 0;
         }
 
+
+        /// <summary>
+        /// Calculate mean offset of n samles (using recursive math) and remove if from signal.
+        /// gx, gy, gz are gyro input to be filtered. 
+        /// </summary>
+        public void removeOffset(ref double gx, ref double gy, ref double gz)
+        {
+            if (k <= n_samples)
+            {
+                float alpha = (k - 1) / k;
+                offset_x = (float)(alpha * offset_x + (1 - alpha) * gx);
+                offset_y = (float)(alpha * offset_y + (1 - alpha) * gy);
+                offset_z = (float)(alpha * offset_z + (1 - alpha) * gz);
+                k++;
+            }
+            gx -= offset_x;
+            gy -= offset_y;
+            gz -= offset_z;
+        }
+
         /// <summary>
         /// Calculate mean offset of n samles (using recursive math) and remove if from signal.
         /// gx, gy, gz are gyro input to be filtered. 
@@ -2512,6 +2533,115 @@ namespace WiimoteLib
 
 
 
+    public class Kalman
+    {
+        /* variables */
+        double Q_angle; // Process noise variance for the accelerometer
+        double Q_bias; // Process noise variance for the gyro bias
+        double R_measure; // Measurement noise variance - this is actually the variance of the measurement noise
+
+        double angle; // The angle calculated by the Kalman filter - part of the 2x1 state matrix
+        double bias; // The gyro bias calculated by the Kalman filter - part of the 2x1 state matrix
+        double rate; // Unbiased rate calculated from the rate and the calculated bias - you have to call getAngle to update the rate
+
+        double[,] P = new double[2, 2]; // Error covariance matrix - This is a 2x2 matrix
+        double[] K = new double[2]; // Kalman gain - This is a 2x1 matrix
+        double y; // Angle difference - 1x1 matrix
+        double S; // Estimate error - 1x1 matrix
+
+
+        public Kalman()
+        {
+
+            /* We will set the varibles like so, these can also be tuned by the user */
+            Reset();
+
+            // Reset bias
+            // Since we assume tha the bias is 0 and we know the starting angle (use setAngle), 
+            //the error covariance matrix is set like so - see: http://en.wikipedia.org/wiki/Kalman_filter#Example_application.2C_technical
+            SetDefaults();
+        }
+
+        // The angle should be in degrees and the rate should be in degrees per second and the delta time in seconds
+        public double getAngle(double newAngle, double newRate, double dt)
+        {
+            // KasBot V2  -  Kalman filter module - http://www.x-firm.com/?page_id=145
+            // Modified by Kristian Lauszus
+            // See my blog post for more information: http://blog.tkjelectronics.dk/2012/09/a-practical-approach-to-kalman-filter-and-how-to-implement-it
+
+            // Discrete Kalman filter time update equations - Time Update ("Predict")
+            // Update xhat - Project the state ahead
+            /* Step 1 */
+            rate = newRate - bias;
+            angle += dt * rate;
+
+            // Update estimation error covariance - Project the error covariance ahead
+            /* Step 2 */
+            P[0, 0] += dt * (dt * P[1, 1] - P[0, 1] - P[1, 0] + Q_angle);
+            P[0, 1] -= dt * P[1, 1];
+            P[1, 0] -= dt * P[1, 1];
+            P[1, 1] += Q_bias * dt;
+
+            // Discrete Kalman filter measurement update equations - Measurement Update ("Correct")
+            // Calculate Kalman gain - Compute the Kalman gain
+            /* Step 4 */
+            S = P[0, 0] + R_measure;
+            /* Step 5 */
+            K[0] = P[0, 0] / S;
+            K[1] = P[1, 0] / S;
+
+            // Calculate angle and bias - Update estimate with measurement zk (newAngle)
+            /* Step 3 */
+            y = newAngle - angle;
+            /* Step 6 */
+            angle += K[0] * y;
+            bias += K[1] * y;
+
+            // Calculate estimation error covariance - Update the error covariance
+            /* Step 7 */
+            P[0, 0] -= K[0] * P[0, 0];
+            P[0, 1] -= K[0] * P[0, 1];
+            P[1, 0] -= K[1] * P[0, 0];
+            P[1, 1] -= K[1] * P[0, 1];
+
+            return angle;
+        }
+
+        public void setAngle(double newAngle) { angle = newAngle; } // Used to set angle, this should be set as the starting angle
+        public double getRate() { return rate; } // Return the unbiased rate
+
+        /* These are used to tune the Kalman filter */
+        public void setQangle(double newQ_angle) { Q_angle = newQ_angle; }
+        public double getQangle() { return Q_angle; }
+
+        public void setQbias(double newQ_bias) { Q_bias = newQ_bias; }
+        public double getQbias() { return Q_bias; }
+
+        public void setRmeasure(double newR_measure) { R_measure = newR_measure; }
+        public double getRmeasure() { return R_measure; }
+
+
+        public void Reset()
+        {
+            bias = 0; // Reset bias
+            P[0, 0] = 0; // Since we assume tha the bias is 0 and we know the starting angle (use setAngle), the error covariance matrix is set like so - see: http://en.wikipedia.org/wiki/Kalman_filter#Example_application.2C_technical
+            P[0, 1] = 0;
+            P[1, 0] = 0;
+            P[1, 1] = 0;
+        }
+
+        public void SetDefaults()
+        {
+            /* We will set the varibles like so, these can also be tuned by the user */
+            Q_angle = 0.001;
+            Q_bias = 0.003;
+            R_measure = 0.03;
+        }
+
+    }//End of class
+
+
+
 
 
     public class KalmanMotionPlusFuser:IFuser
@@ -2523,6 +2653,8 @@ namespace WiimoteLib
         //Convert some units
         public static double RAD_TO_DEG = 180 / Math.PI;
         public static double DEG_TO_RAD = Math.PI / 180;
+        private Kalman kalman1;
+        private Kalman kalman2;
 
         public KalmanMotionPlusFuser()
         {
@@ -2530,15 +2662,39 @@ namespace WiimoteLib
             gyroFilter = new GyroFilter(200);
             motionPlusPeriodCounter = new SamplePeriodCounter(100);
             kalmanAHRS = new KalmanEulerFilter(0.1f);
+            kalman1 = new Kalman();
+            kalman2 = new Kalman();
         }
 
         public void HandleIMUData(double yawDown, double pitchLeft, double rollLeft, double accX, double accY, double accZ)
         {
-            if (motionPlusPeriodCounter.Update())
-            {
-             //   gyroFilter.removeOffset(ref (float)rollLeft, ref (float)pitchLeft,ref (float)yawDown);
-                kalmanAHRS.Update((float)(rollLeft * DEG_TO_RAD), (float)(pitchLeft * DEG_TO_RAD), (float)(yawDown * DEG_TO_RAD), (float)accX, (float)accY, (float)accZ);
-            }
+
+           // mWiimoteState.AccelState.Angles.Roll = (float)(Math.Atan2(x, z) * RAD_TO_DEG);
+           // mWiimoteState.AccelState.Angles.Pitch = ;
+            double xSquared = accX * accX;
+            double ySquared = accY * accY;
+            double zSquared = accZ * accZ;
+
+
+
+            double inv_len = 1 / Math.Sqrt(xSquared + ySquared + zSquared);
+            double x = accX * inv_len;
+            double y = accY * inv_len;
+            double z = accZ * inv_len;
+
+            Angles.Pitch = kalman1.getAngle(-(float)(Math.Asin(y) * RAD_TO_DEG), pitchLeft, 0.05);
+            kalman2.setAngle(Angles.Pitch);
+
+//Debug.WriteLine();
+            Angles.Roll = kalman1.getAngle(-(float)(Math.Atan2(x, z) * RAD_TO_DEG), rollLeft, 0.05);
+            kalman2.setAngle(Angles.Roll);
+           // 
+          //  Debug.WriteLine(kalman1.getAngle(-(float)(Math.Asin(y) * RAD_TO_DEG), pitchLeft, 0.05));
+            //if (motionPlusPeriodCounter.Update())
+            //{
+            // //   gyroFilter.removeOffset(ref (float)rollLeft, ref (float)pitchLeft,ref (float)yawDown);
+            //    kalmanAHRS.Update((float)(rollLeft * DEG_TO_RAD), (float)(pitchLeft * DEG_TO_RAD), (float)(yawDown * DEG_TO_RAD), (float)accX, (float)accY, (float)accZ);
+            //}
         }
 
 
@@ -2546,12 +2702,12 @@ namespace WiimoteLib
         {
             get
             {
-               kalmanAHRS.GetState(out Angles.Roll, out Angles.Pitch, out Angles.Yaw);
+               //kalmanAHRS.GetState(out Angles.Roll, out Angles.Pitch, out Angles.Yaw);
 
 
-                Angles.Yaw *= RAD_TO_DEG;
-                Angles.Roll *= RAD_TO_DEG;
-                Angles.Pitch *= RAD_TO_DEG;
+               // Angles.Yaw *= RAD_TO_DEG;
+               // Angles.Roll *= RAD_TO_DEG;
+               // Angles.Pitch *= RAD_TO_DEG;
 
                 return Angles;
             }

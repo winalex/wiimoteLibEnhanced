@@ -2691,6 +2691,12 @@
             Reset filter. The next n samples will be used to calculate offset value
             </summary>
         </member>
+        <member name="M:WiimoteLib.GyroFilter.removeOffset(System.Double@,System.Double@,System.Double@)">
+            <summary>
+            Calculate mean offset of n samles (using recursive math) and remove if from signal.
+            gx, gy, gz are gyro input to be filtered. 
+            </summary>
+        </member>
         <member name="M:WiimoteLib.GyroFilter.removeOffset(System.Single@,System.Single@,System.Single@)">
             <summary>
             Calculate mean offset of n samles (using recursive math) and remove if from signal.

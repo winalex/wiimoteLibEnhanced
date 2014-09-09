@@ -1674,6 +1674,7 @@ namespace WiimoteLib
                              if (!IsMotionPlusCalibrated())
                              {
                                  InitCalibration(mWiimoteState.MotionPlusState.RawValues.X, mWiimoteState.MotionPlusState.RawValues.Y, mWiimoteState.MotionPlusState.RawValues.Z);
+                                 return;
                              }
                          }
                          else
@@ -1688,9 +1689,26 @@ namespace WiimoteLib
                          unitsAtZeroDeg.Y = (int)mBias.Y;
                          unitsAtZeroDeg.Z = (int)mBias.Z;
 
-                         float diff = mWiimoteState.MotionPlusState.RawValues.X - mPrevAngleRates.X;
-                         
-                     //if(diff>0 && diff<mNoise.
+                         //float diff = mWiimoteState.MotionPlusState.RawValues.X - mPrevAngleRates.X;
+
+                         //if ((diff > 0 && diff < (mMaxNoise.X-mBias.X)) || (diff<0 && diff > (mMinNoise.X-mBias.X)))
+                         //{
+                         //    mWiimoteState.MotionPlusState.RawValues.X = (int)mPrevAngleRates.X;
+                         //}
+
+
+                         //diff = mWiimoteState.MotionPlusState.RawValues.Y - mPrevAngleRates.Y;
+                         //if ((diff > 0 && diff < (mMaxNoise.Y - mBias.Y)) || (diff < 0 && diff > (mMinNoise.Y - mBias.Y)))
+                         //{
+                         //    mWiimoteState.MotionPlusState.RawValues.Y = (int)mPrevAngleRates.Y;
+                         //}
+
+                         //diff = mWiimoteState.MotionPlusState.RawValues.Z - mPrevAngleRates.Z;
+                         //if ((diff > 0 && diff < (mMaxNoise.Z - mBias.Z)) || (diff < 0 && diff > (mMinNoise.Z - mBias.Z)))
+                         //{
+                         //    mWiimoteState.MotionPlusState.RawValues.Z = (int)mPrevAngleRates.Z;
+                         //}
+
                          
 
                       

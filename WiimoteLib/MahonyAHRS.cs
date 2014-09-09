@@ -330,6 +330,9 @@ namespace WiimoteLib
 
             Roll = Math.Atan2(m23, m33);
             Pitch = Math.Asin(-m13);
+
+            // Pitch= Math.Atan2(m23, m33);
+            //Roll = Math.Asin(-m13);
             Yaw = Math.Atan2(m12, m11);
 
 
