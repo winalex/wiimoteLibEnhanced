@@ -2682,12 +2682,18 @@ namespace WiimoteLib
             double y = accY * inv_len;
             double z = accZ * inv_len;
 
-            Angles.Pitch = kalman1.getAngle(-(float)(Math.Asin(y) * RAD_TO_DEG), pitchLeft, 0.05);
-            kalman2.setAngle(Angles.Pitch);
+           
+
+            //if (accY <= -1)
+            //{
+            //    Angles.Pitch = kalman1.getAngle(-(float)(Math.Asin(y) * RAD_TO_DEG), rollLeft, 0.05);
+            //}else
+            //    Angles.Pitch = kalman1.getAngle(-(float)(Math.Asin(y) * RAD_TO_DEG), rollLeft, 0.05);
+          //  kalman2.setAngle(Angles.Pitch);
 
 //Debug.WriteLine();
-            Angles.Roll = kalman1.getAngle(-(float)(Math.Atan2(x, z) * RAD_TO_DEG), rollLeft, 0.05);
-            kalman2.setAngle(Angles.Roll);
+          //  Angles.Roll = kalman1.getAngle(-(float)(Math.Atan2(x, z) * RAD_TO_DEG),rollLeft , 0.05) ;
+           // kalman2.setAngle(Angles.Roll);
            // 
           //  Debug.WriteLine(kalman1.getAngle(-(float)(Math.Asin(y) * RAD_TO_DEG), pitchLeft, 0.05));
             //if (motionPlusPeriodCounter.Update())

@@ -14,6 +14,27 @@
             Finds all Wiimotes connected to the system and adds them to the collection
             </summary>
         </member>
+        <member name="F:WiimoteLib.ComplementaryFilter._Angles">
+            <summary>
+             Angles X,Y,Z in radians
+            </summary>
+        </member>
+        <member name="T:WiimoteLib.ComplementaryFilterFuser">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:WiimoteLib.ComplementaryFilterFuser.HandleIMUData(System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)">
+            <summary>
+            Handle gyro and accel data by applying calculation if sample period have passed
+            </summary>
+            <param name="yawDown"></param>
+            <param name="pitchLeft"></param>
+            <param name="rollLeft"></param>
+            <param name="accX"></param>
+            <param name="accY"></param>
+            <param name="accZ"></param>
+        </member>
         <member name="T:WiimoteLib.WiimoteExtensionChangedEventArgs">
             <summary>
             Argument sent through the WiimoteExtensionChangedEvent
@@ -1964,7 +1985,7 @@
             Gets or sets the Quaternion output.
             </summary>
         </member>
-        <member name="M:WiimoteLib.MadgwickMotionPlusFuser.HandleIMUData(System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)">
+        <member name="M:WiimoteLib.MagdwickFuser.HandleIMUData(System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)">
             <summary>
             Handle gyro and accel data by applying calculation if sample period have passed
             </summary>

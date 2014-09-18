@@ -96,7 +96,7 @@ namespace WiimoteLib
 		public float X, Y, Z;
 
 
-        public Point3F(float x = 0, float y = 0, float z = 0)
+        public Point3F(float x = 0f, float y = 0f, float z = 0f)
         {
             this.X = x;
             this.Y = y;

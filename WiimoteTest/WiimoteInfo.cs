@@ -34,9 +34,9 @@ namespace WiimoteTest
             g = Graphics.FromImage(b);
 
             
-           fuser = new KalmanMotionPlusFuser();
+          //fuser = new KalmanMotionPlusFuser();
            //fuser = new MahonyMotionPlusFuser();
-          // fuser = new MadgwickMotionPlusFuser();
+           fuser = new ComplementaryFilterFuser();
         }
 
 		public WiimoteInfo(Wiimote wm) : this()
